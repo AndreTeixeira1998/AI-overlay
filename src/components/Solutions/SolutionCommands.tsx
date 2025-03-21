@@ -12,25 +12,15 @@ export interface SolutionCommandsProps {
   credits: number
   currentLanguage: string
   setLanguage: (language: string) => void
-}
-
-const handleSignOut = async () => {
-  try {
-    // Clear any local storage or electron-specific data first
-    localStorage.clear()
-    sessionStorage.clear()
-  } catch (err) {
-    console.error("Error signing out:", err)
-  }
+  parentHeight: number
 }
 
 const SolutionCommands: React.FC<SolutionCommandsProps> = ({
   onTooltipVisibilityChange,
   isProcessing,
-  extraScreenshots = [],
-  credits,
   currentLanguage,
-  setLanguage
+  setLanguage,
+  parentHeight
 }) => {
   const [isTooltipVisible, setIsTooltipVisible] = useState(false)
   const tooltipRef = useRef<HTMLDivElement>(null)
@@ -39,7 +29,8 @@ const SolutionCommands: React.FC<SolutionCommandsProps> = ({
   useEffect(() => {
     if (onTooltipVisibilityChange) {
       let tooltipHeight = 0
-      if (tooltipRef.current && isTooltipVisible) {
+      console.log("tooltipRef.current", tooltipRef.current,parentHeight)
+      if (tooltipRef.current && isTooltipVisible&&parentHeight<tooltipHeight+10) {
         tooltipHeight = tooltipRef.current.offsetHeight + 10 // Adjust if necessary
       }
       onTooltipVisibilityChange(isTooltipVisible, tooltipHeight)
@@ -58,23 +49,23 @@ const SolutionCommands: React.FC<SolutionCommandsProps> = ({
     <div>
       <div className="pt-2 w-fit">
         <div className="text-xs text-white/90 backdrop-blur-md bg-black/60 rounded-lg py-2 px-4 flex items-center justify-center gap-4">
-          {/* Show/Hide - Always visible */}
+          {/* 显示/隐藏 - 始终可见 */}
           <div
             className="flex items-center gap-2 cursor-pointer rounded px-2 py-1.5 hover:bg-white/10 transition-colors"
             onClick={async () => {
               try {
                 const result = await window.electronAPI.toggleMainWindow()
                 if (!result.success) {
-                  console.error("Failed to toggle window:", result.error)
-                  showToast("Error", "Failed to toggle window", "error")
+                  console.error("切换窗口失败:", result.error)
+                  showToast("错误", "切换窗口失败", "error")
                 }
               } catch (error) {
-                console.error("Error toggling window:", error)
-                showToast("Error", "Failed to toggle window", "error")
+                console.error("切换窗口出错:", error)
+                showToast("错误", "切换窗口失败", "error")
               }
             }}
           >
-            <span className="text-[11px] leading-none">Show/Hide</span>
+            <span className="text-[11px] leading-none">显示/隐藏</span>
             <div className="flex gap-1">
               <button className="bg-white/10 rounded-md px-1.5 py-1 text-[11px] leading-none text-white/70">
                 {COMMAND_KEY}
@@ -85,98 +76,83 @@ const SolutionCommands: React.FC<SolutionCommandsProps> = ({
             </div>
           </div>
 
-          {/* Screenshot and Debug commands - Only show if not processing */}
-          {!isProcessing && (
-            <>
-              <div
-                className="flex items-center gap-2 cursor-pointer rounded px-2 py-1.5 hover:bg-white/10 transition-colors"
-                onClick={async () => {
-                  try {
-                    const result = await window.electronAPI.triggerScreenshot()
-                    if (!result.success) {
-                      console.error("Failed to take screenshot:", result.error)
-                      showToast("Error", "Failed to take screenshot", "error")
-                    }
-                  } catch (error) {
-                    console.error("Error taking screenshot:", error)
-                    showToast("Error", "Failed to take screenshot", "error")
+          {/* 截图和调试命令 - 仅在未处理时显示 */}
+          {/* <div
+            className="flex items-center gap-2 cursor-pointer rounded px-2 py-1.5 hover:bg-white/10 transition-colors"
+            onClick={async () => {
+              try {
+                const result = await window.electronAPI.triggerScreenshot()
+                if (!result.success) {
+                  console.error("截图失败:", result.error)
+                  showToast("错误", "截图失败", "error")
+                }
+              } catch (error) {
+                console.error("截图出错:", error)
+                showToast("错误", "截图失败", "error")
+              }
+            }}
+          >
+            <span className="text-[11px] leading-none truncate">
+              {extraScreenshots.length === 0
+                ? "截取你的代码"
+                : "截图"}
+            </span>
+            <div className="flex gap-1">
+              <button className="bg-white/10 rounded-md px-1.5 py-1 text-[11px] leading-none text-white/70">
+                {COMMAND_KEY}
+              </button>
+              <button className="bg-white/10 rounded-md px-1.5 py-1 text-[11px] leading-none text-white/70">
+                H
+              </button>
+            </div>
+          </div> */}
+
+          {/* {extraScreenshots.length > 0 && (
+            <div
+              className="flex items-center gap-2 cursor-pointer rounded px-2 py-1.5 hover:bg-white/10 transition-colors"
+              onClick={async () => {
+                try {
+                  const result =
+                    await window.electronAPI.triggerProcessScreenshots()
+                  if (!result.success) {
+                    console.error("处理截图失败:", result.error)
+                    showToast("错误", "处理截图失败", "error")
                   }
-                }}
-              >
-                <span className="text-[11px] leading-none truncate">
-                  {extraScreenshots.length === 0
-                    ? "Screenshot your code"
-                    : "Screenshot"}
-                </span>
-                <div className="flex gap-1">
-                  <button className="bg-white/10 rounded-md px-1.5 py-1 text-[11px] leading-none text-white/70">
-                    {COMMAND_KEY}
-                  </button>
-                  <button className="bg-white/10 rounded-md px-1.5 py-1 text-[11px] leading-none text-white/70">
-                    H
-                  </button>
-                </div>
+                } catch (error) {
+                  console.error("处理截图出错:", error)
+                  showToast("错误", "处理截图失败", "error")
+                }
+              }}
+            >
+              <span className="text-[11px] leading-none">调试</span>
+              <div className="flex gap-1">
+                <button className="bg-white/10 rounded-md px-1.5 py-1 text-[11px] leading-none text-white/70">
+                  {COMMAND_KEY}
+                </button>
+                <button className="bg-white/10 rounded-md px-1.5 py-1 text-[11px] leading-none text-white/70">
+                  D
+                </button>
               </div>
+            </div>
+          )} */}
 
-              {extraScreenshots.length > 0 && (
-                <div
-                  className="flex items-center gap-2 cursor-pointer rounded px-2 py-1.5 hover:bg-white/10 transition-colors"
-                  onClick={async () => {
-                    try {
-                      const result =
-                        await window.electronAPI.triggerProcessScreenshots()
-                      if (!result.success) {
-                        console.error(
-                          "Failed to process screenshots:",
-                          result.error
-                        )
-                        showToast(
-                          "Error",
-                          "Failed to process screenshots",
-                          "error"
-                        )
-                      }
-                    } catch (error) {
-                      console.error("Error processing screenshots:", error)
-                      showToast(
-                        "Error",
-                        "Failed to process screenshots",
-                        "error"
-                      )
-                    }
-                  }}
-                >
-                  <span className="text-[11px] leading-none">Debug</span>
-                  <div className="flex gap-1">
-                    <button className="bg-white/10 rounded-md px-1.5 py-1 text-[11px] leading-none text-white/70">
-                      {COMMAND_KEY}
-                    </button>
-                    <button className="bg-white/10 rounded-md px-1.5 py-1 text-[11px] leading-none text-white/70">
-                      ↵
-                    </button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-
-          {/* Start Over - Always visible */}
+          {/* 重新开始 - 始终可见 */}
           <div
             className="flex items-center gap-2 cursor-pointer rounded px-2 py-1.5 hover:bg-white/10 transition-colors"
             onClick={async () => {
               try {
                 const result = await window.electronAPI.triggerReset()
                 if (!result.success) {
-                  console.error("Failed to reset:", result.error)
-                  showToast("Error", "Failed to reset", "error")
+                  console.error("重置失败:", result.error)
+                  showToast("错误", "重置失败", "error")
                 }
               } catch (error) {
-                console.error("Error resetting:", error)
-                showToast("Error", "Failed to reset", "error")
+                console.error("重置出错:", error)
+                showToast("错误", "重置失败", "error")
               }
             }}
           >
-            <span className="text-[11px] leading-none">Start Over</span>
+            <span className="text-[11px] leading-none">重新开始</span>
             <div className="flex gap-1">
               <button className="bg-white/10 rounded-md px-1.5 py-1 text-[11px] leading-none text-white/70">
                 {COMMAND_KEY}
@@ -187,16 +163,16 @@ const SolutionCommands: React.FC<SolutionCommandsProps> = ({
             </div>
           </div>
 
-          {/* Separator */}
+          {/* 分隔线 */}
           <div className="mx-2 h-4 w-px bg-white/20" />
 
-          {/* Settings with Tooltip */}
+          {/* 设置和工具提示 */}
           <div
             className="relative inline-block"
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
           >
-            {/* Gear icon */}
+            {/* 设置图标 */}
             <div className="w-4 h-4 flex items-center justify-center cursor-pointer text-white/70 hover:text-white/90 transition-colors">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -213,22 +189,22 @@ const SolutionCommands: React.FC<SolutionCommandsProps> = ({
               </svg>
             </div>
 
-            {/* Tooltip Content */}
+            {/* 工具提示内容 */}
             {isTooltipVisible && (
               <div
                 ref={tooltipRef}
                 className="absolute top-full right-0 mt-2 w-80"
                 style={{ zIndex: 100 }}
               >
-                {/* Add transparent bridge */}
+                {/* 添加透明桥接元素 */}
                 <div className="absolute -top-2 right-0 w-full h-2" />
                 <div className="p-3 text-xs bg-black/80 backdrop-blur-md rounded-lg border border-white/10 text-white/90 shadow-lg">
                   <div className="space-y-4">
                     <h3 className="font-medium whitespace-nowrap">
-                      Keyboard Shortcuts
+                      键盘快捷键
                     </h3>
                     <div className="space-y-3">
-                      {/* Show/Hide - Always visible */}
+                      {/* 显示/隐藏项 - 始终可见 */}
                       <div
                         className="cursor-pointer rounded px-2 py-1.5 hover:bg-white/10 transition-colors"
                         onClick={async () => {
@@ -236,28 +212,17 @@ const SolutionCommands: React.FC<SolutionCommandsProps> = ({
                             const result =
                               await window.electronAPI.toggleMainWindow()
                             if (!result.success) {
-                              console.error(
-                                "Failed to toggle window:",
-                                result.error
-                              )
-                              showToast(
-                                "Error",
-                                "Failed to toggle window",
-                                "error"
-                              )
+                              console.error("切换窗口失败:", result.error)
+                              showToast("错误", "切换窗口失败", "error")
                             }
                           } catch (error) {
-                            console.error("Error toggling window:", error)
-                            showToast(
-                              "Error",
-                              "Failed to toggle window",
-                              "error"
-                            )
+                            console.error("切换窗口出错:", error)
+                            showToast("错误", "切换窗口失败", "error")
                           }
                         }}
                       >
                         <div className="flex items-center justify-between">
-                          <span className="truncate">Toggle Window</span>
+                          <span className="truncate">切换窗口</span>
                           <div className="flex gap-1 flex-shrink-0">
                             <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px] leading-none">
                               {COMMAND_KEY}
@@ -268,11 +233,11 @@ const SolutionCommands: React.FC<SolutionCommandsProps> = ({
                           </div>
                         </div>
                         <p className="text-[10px] leading-relaxed text-white/70 truncate mt-1">
-                          Show or hide this window.
+                          显示或隐藏此窗口。
                         </p>
                       </div>
 
-                      {/* Screenshot and Debug commands - Only show if not processing */}
+                      {/* 截图和调试命令 - 仅在未处理时显示 */}
                       {!isProcessing && (
                         <>
                           <div
@@ -283,27 +248,27 @@ const SolutionCommands: React.FC<SolutionCommandsProps> = ({
                                   await window.electronAPI.triggerScreenshot()
                                 if (!result.success) {
                                   console.error(
-                                    "Failed to take screenshot:",
+                                    "截图失败:",
                                     result.error
                                   )
                                   showToast(
-                                    "Error",
-                                    "Failed to take screenshot",
+                                    "错误",
+                                    "截图失败",
                                     "error"
                                   )
                                 }
                               } catch (error) {
-                                console.error("Error taking screenshot:", error)
+                                console.error("截图出错:", error)
                                 showToast(
-                                  "Error",
-                                  "Failed to take screenshot",
+                                  "错误",
+                                  "截图失败",
                                   "error"
                                 )
                               }
                             }}
                           >
                             <div className="flex items-center justify-between">
-                              <span className="truncate">Take Screenshot</span>
+                              <span className="truncate">截图</span>
                               <div className="flex gap-1 flex-shrink-0">
                                 <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px] leading-none">
                                   {COMMAND_KEY}
@@ -314,12 +279,11 @@ const SolutionCommands: React.FC<SolutionCommandsProps> = ({
                               </div>
                             </div>
                             <p className="text-[10px] leading-relaxed text-white/70 truncate mt-1">
-                              Capture additional parts of the question or your
-                              solution for debugging help.
+                              捕获问题或解决方案的其他部分以获取调试帮助。
                             </p>
                           </div>
 
-                          {extraScreenshots.length > 0 && (
+                          {/* {extraScreenshots.length > 0 && (
                             <div
                               className="cursor-pointer rounded px-2 py-1.5 hover:bg-white/10 transition-colors"
                               onClick={async () => {
@@ -328,84 +292,83 @@ const SolutionCommands: React.FC<SolutionCommandsProps> = ({
                                     await window.electronAPI.triggerProcessScreenshots()
                                   if (!result.success) {
                                     console.error(
-                                      "Failed to process screenshots:",
+                                      "处理截图失败:",
                                       result.error
                                     )
                                     showToast(
-                                      "Error",
-                                      "Failed to process screenshots",
+                                      "错误",
+                                      "处理截图失败",
                                       "error"
                                     )
                                   }
                                 } catch (error) {
                                   console.error(
-                                    "Error processing screenshots:",
+                                    "处理截图出错:",
                                     error
                                   )
                                   showToast(
-                                    "Error",
-                                    "Failed to process screenshots",
+                                    "错误",
+                                    "处理截图失败",
                                     "error"
                                   )
                                 }
                               }}
                             >
                               <div className="flex items-center justify-between">
-                                <span className="truncate">Debug</span>
+                                <span className="truncate">调试</span>
                                 <div className="flex gap-1 flex-shrink-0">
                                   <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px] leading-none">
                                     {COMMAND_KEY}
                                   </span>
                                   <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px] leading-none">
-                                    ↵
+                                    D
                                   </span>
                                 </div>
                               </div>
-                              <p className="text-[10px] leading-relaxed text-white/70 truncate mt-1">
-                                Generate new solutions based on all previous and
-                                newly added screenshots.
+                              <p className="text-[10px] leading-relaxed text白/70 truncate mt-1">
+                                基于所有之前和新添加的截图生成新的解决方案。
                               </p>
                             </div>
-                          )}
+                          )} */}
                         </>
                       )}
 
-                      {/* Start Over - Always visible */}
+                      {/* 重新开始 - 始终可见 */}
                       <div
-                        className="cursor-pointer rounded px-2 py-1.5 hover:bg-white/10 transition-colors"
+                        className="cursor-pointer rounded px-2 py-1.5 hover:bg白/10 transition-colors"
                         onClick={async () => {
                           try {
                             const result =
                               await window.electronAPI.triggerReset()
                             if (!result.success) {
-                              console.error("Failed to reset:", result.error)
-                              showToast("Error", "Failed to reset", "error")
+                              console.error("重置失败:", result.error)
+                              showToast("错误", "重置失败", "error")
                             }
                           } catch (error) {
-                            console.error("Error resetting:", error)
-                            showToast("Error", "Failed to reset", "error")
+                            console.error("重置出错:", error)
+                            showToast("错误", "重置失败", "error")
                           }
                         }}
                       >
                         <div className="flex items-center justify-between">
-                          <span className="truncate">Start Over</span>
+                          <span className="truncate">重新开始</span>
                           <div className="flex gap-1 flex-shrink-0">
-                            <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px] leading-none">
+                            <span className="bg白/20 px-1.5 py-0.5 rounded text-[10px] leading-none">
                               {COMMAND_KEY}
                             </span>
-                            <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px] leading-none">
+                            <span className="bg白/20 px-1.5 py-0.5 rounded text-[10px] leading-none">
                               R
                             </span>
                           </div>
                         </div>
-                        <p className="text-[10px] leading-relaxed text-white/70 truncate mt-1">
-                          Start fresh with a new question.
+                        <p className="text-[10px] leading-relaxed text白/70 truncate mt-1">
+                          开始一个新的问题。
                         </p>
                       </div>
                     </div>
 
-                    {/* Separator and Log Out */}
-                    <div className="pt-3 mt-3 border-t border-white/10">
+                    {/* 分隔线和语言选择器 */}
+                    <div className="pt-3 mt-3 border-t border白/10">
                       <LanguageSelector
                         currentLanguage={currentLanguage}
                         setLanguage={setLanguage}

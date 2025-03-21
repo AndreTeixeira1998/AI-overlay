@@ -8,7 +8,7 @@
     "build": "cross-env NODE_ENV=production rimraf dist dist-electron && vite build && tsc -p tsconfig.electron.json && electron-builder"
   },
   "build": {
-    "appId": "com.chunginlee.interviewcoder",
+    "appId": "com.franklin.interviewcoder",
     "productName": "Interview Coder",
     "files": [
       "dist/**/*",

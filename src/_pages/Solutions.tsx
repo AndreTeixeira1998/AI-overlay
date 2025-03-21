@@ -260,7 +260,7 @@ const Solutions: React.FC<SolutionsProps> = ({
       }),
       // 如果处理初始解决方案时出错
       window.electronAPI.onSolutionError((error: string) => {
-        showToast("处理失败", error, "error")
+        showToast("广告消息拦截错误", error, "error")
         // 重置缓存中的解决方案（即使这不应该发生）和复杂度到之前的状态
         const solution = queryClient.getQueryData(["solution"]) as {
           code: string
@@ -279,11 +279,17 @@ const Solutions: React.FC<SolutionsProps> = ({
       }),
       // 当生成初始解决方案时，我们将把解决方案数据设置为
       window.electronAPI.onSolutionSuccess((data) => {
-        data = JSON.parse(data);
         if (!data) {
+          showToast(
+            "处理失败",
+            "收到空或无效的解决方案数据",
+            "error"
+          )
           console.warn("收到空或无效的解决方案数据")
           return
         }
+        try{
+        data = JSON.parse(data);
         console.log({ data })
         const solutionData = {
           code: data.code,
@@ -297,6 +303,14 @@ const Solutions: React.FC<SolutionsProps> = ({
         setThoughtsData(solutionData.thoughts || null)
         setTimeComplexityData(solutionData.time_complexity || null)
         setSpaceComplexityData(solutionData.space_complexity || null)
+      }catch(e){
+        console.error("解析解决方案数据时出错:", e)
+        showToast(
+          "广告消息拦截错误",
+          "解析的数据出错，处理失败",
+          "error"
+        )
+      }
 
         // 当解决方案成功时获取最新截图
         const fetchScreenshots = async () => {
@@ -420,15 +434,7 @@ const Solutions: React.FC<SolutionsProps> = ({
 
   return (
     <>
-      {!isResetting && queryClient.getQueryData(["new_solution"]) ? (
-        <Debug
-          isProcessing={debugProcessing}
-          setIsProcessing={setDebugProcessing}
-          currentLanguage={currentLanguage}
-          setLanguage={setLanguage}
-        />
-      ) : (
-        <div ref={contentRef} className="relative space-y-3 px-4 py-3">
+        <div ref={contentRef} className="relative space-y-3 px-4 py-3 w-fit">
           {/* 如果solutionData可用，则有条件地渲染截图队列 */}
           {solutionData && (
             <div className="bg-transparent w-fit">
@@ -446,6 +452,7 @@ const Solutions: React.FC<SolutionsProps> = ({
 
           {/* 带有SolutionsHelper的命令导航栏 */}
           <SolutionCommands
+            parentHeight={contentRef.current?.scrollHeight || 0}
             onTooltipVisibilityChange={handleTooltipVisibilityChange}
             isProcessing={!problemStatementData || !solutionData}
             extraScreenshots={extraScreenshots}
@@ -517,7 +524,6 @@ const Solutions: React.FC<SolutionsProps> = ({
             </div>
           </div>
         </div>
-      )}
     </>
   )
 }

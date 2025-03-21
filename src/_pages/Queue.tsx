@@ -73,9 +73,10 @@ const Queue: React.FC<QueueProps> = ({
       if (contentRef.current) {
         let contentHeight = contentRef.current.scrollHeight
         const contentWidth = contentRef.current.scrollWidth
-        if (isTooltipVisible) {
-          contentHeight += tooltipHeight
+        if (isTooltipVisible&&contentHeight<tooltipHeight+10) {
+          contentHeight += tooltipHeight+10
         }
+      
         window.electronAPI.updateContentDimensions({
           width: contentWidth,
           height: contentHeight

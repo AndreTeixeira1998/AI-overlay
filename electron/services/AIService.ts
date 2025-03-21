@@ -33,7 +33,7 @@ export class AIService {
       const response = await axios.post(
         this.config.apiUrl,
         {
-          model: this.config.model || 'gpt-4-vision-preview',
+          model: this.config.model,
           messages: [
             {
               role: 'user',
@@ -47,12 +47,10 @@ export class AIService {
                 }))
               ]
             }
-          ],
-          stream: true
+          ]
         },
         {
           signal,
-          responseType: 'stream',
           headers: {
             'Authorization': `Bearer ${this.config.apiKey}`,
             'Content-Type': 'application/json'
@@ -60,32 +58,17 @@ export class AIService {
         }
       );
 
-      let fullResponse = '';
+      const content = response.data.choices[0]?.message?.content || '';
       
-      for await (const chunk of response.data) {
-        const lines = chunk.toString().split('\n').filter(Boolean);
-        for (const line of lines) {
-          const message = line.replace(/^data: /, '');
-          if (message === '[DONE]') continue;
-          
-          try {
-            const parsed = JSON.parse(message);
-            const content = parsed.choices[0]?.delta?.content || '';
-            fullResponse += content;
-            
-            if (onProgress) {
-              onProgress(content);
-            }
-          } catch (e) {
-            console.log('AI Response:', message);
-            console.error('Error parsing streaming response:', e);
-          }
-        }
+      if (onProgress) {
+        onProgress(content);
       }
+
+      console.log('AI Response:', content);
 
       return {
         success: true,
-        data: fullResponse
+        data: content
       };
 
     } catch (error: any) {

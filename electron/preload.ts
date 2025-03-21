@@ -1,5 +1,5 @@
 console.log("预加载脚本启动中...")
-import { contextBridge, ipcRenderer } from "electron"
+import { contextBridge, ipcRenderer,webFrame } from "electron"
 const { shell } = require("electron")
 
 // 暴露给渲染进程的 Electron API 类型定义
@@ -28,6 +28,7 @@ interface ElectronAPI {
   onProcessingNoScreenshots: (callback: () => void) => () => void
   onProblemExtracted: (callback: (data: any) => void) => () => void
   onSolutionSuccess: (callback: (data: any) => void) => () => void
+  onSolutionStreamSuccess: (callback: (data: any) => void) => () => void
   onDebugError: (callback: (error: string) => void) => () => void
   openExternal: (url: string) => void
   toggleMainWindow: () => Promise<{ success: boolean; error?: string }>
@@ -51,6 +52,7 @@ export const PROCESSING_EVENTS = {
   INITIAL_START: "initial-start",
   PROBLEM_EXTRACTED: "problem-extracted",
   SOLUTION_SUCCESS: "solution-success",
+  PARTIAL_RESPONSE: "partial-response",
   INITIAL_SOLUTION_ERROR: "solution-error",
   RESET: "reset",
 
@@ -62,6 +64,11 @@ export const PROCESSING_EVENTS = {
 
 // 文件顶部
 console.log("预加载脚本正在运行")
+
+// Set zoom factor and limits
+webFrame.setZoomFactor(1);
+webFrame.setVisualZoomLevelLimits(1, 1);
+
 
 const electronAPI = {
   openSettingsPortal: () => ipcRenderer.invoke("open-settings-portal"),
@@ -162,6 +169,16 @@ const electronAPI = {
     return () => {
       ipcRenderer.removeListener(
         PROCESSING_EVENTS.SOLUTION_SUCCESS,
+        subscription
+      )
+    }
+  },
+  onSolutionStreamSuccess: (callback: (data: any) => void) => {
+    const subscription = (_: any, data: any) => callback(data)
+    ipcRenderer.on(PROCESSING_EVENTS.PARTIAL_RESPONSE, subscription)
+    return () => {
+      ipcRenderer.removeListener(
+        PROCESSING_EVENTS.PARTIAL_RESPONSE,
         subscription
       )
     }

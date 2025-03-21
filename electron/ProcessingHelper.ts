@@ -6,6 +6,7 @@ import axios from "axios"
 import { app } from "electron"
 import { BrowserWindow } from "electron"
 import { AIService, AIConfig } from './services/AIService';
+import { getAnalysisPrompts, getSolutionPrompts } from './constant/prompt';
 
 const isDev = !app.isPackaged
 const API_BASE_URL = isDev
@@ -295,10 +296,8 @@ export class ProcessingHelper {
       const mainWindow = this.deps.getMainWindow();
       const language = await this.getLanguage();
 
-      const prompt = `你现在是一个算法工程师，请分析这些编程问题的截图并提取关键信息。首选编程语言是 ${language}。请包含问题描述、约束条件以及任何示例输入/输出。并且你需要以中文给出回复信息。`;
-
       const result = await this.aiService.processWithAI(
-        prompt,
+        getAnalysisPrompts({language}),
         imageDataList,
         signal,
         (chunk) => {
@@ -345,45 +344,8 @@ export class ProcessingHelper {
         throw new Error("没有可用的问题信息");
       }
 
-      const prompt = `作为面试者，请你基于这个编程问题：${JSON.stringify(problemInfo)}
-                      按照面试的标准回答方式，提供解决方案，不能使用第三方api，只能是语言自己本身具有的api来解答。必须严格按照以下 JSON 格式返回：
-
-                      {
-                        "code": "完整的代码实现，使用 ${language} 语言",
-                        "thoughts": [
-                          "1. 问题理解：...",
-                          "2. 解题思路：...",
-                          "3. 优化思考：...",
-                          "4. 边界情况：..."
-                        ],
-                        "time_complexity": "时间复杂度分析（包含详细推导过程）",
-                        "space_complexity": "空间复杂度分析（包含详细推导过程）"
-                      }
-
-                      示例输出：
-                      {
-                        "code": "def twoSum(nums, target):\\n    seen = {}\\n    for i, num in enumerate(nums):\\n        complement = target - num\\n        if complement in seen:\\n            return [seen[complement], i]\\n        seen[num] = i\\n    return []",
-                        "thoughts": [
-                          "1. 问题理解：这是一个查找数组中两数之和等于目标值的问题，需要返回这两个数的索引位置",
-                          "2. 解题思路：使用哈希表存储遍历过的数字，每次遍历时检查目标值与当前数的差值是否存在于哈希表中",
-                          "3. 优化思考：暴力解法需要两重循环O(n²)，使用哈希表可以将时间复杂度优化至O(n)",
-                          "4. 边界情况：需要考虑数组为空、无解、多组解的情况"
-                        ],
-                        "time_complexity": "时间复杂度为O(n)，因为我们只需要遍历数组一次，哈希表的查找操作为O(1)",
-                        "space_complexity": "空间复杂度为O(n)，最坏情况下需要存储整个数组的元素到哈希表中"
-                      }
-
-                      请确保：
-                      1. 按照面试场景的标准回答格式
-                      2. code 字段包含完整、可运行的代码实现
-                      3. thoughts 数组必须包含问题理解、解题思路、优化思考、边界情况等关键点
-                      4. 复杂度分析要有推导过程，不要简单地给出结果
-                      5. 所有回答都应该清晰专业，像在真实面试中作答
-
-                      请直接返回 JSON 字符串，不要包含其他说明文字。`;
-
       return await this.aiService.processWithAI(
-        prompt,
+        getSolutionPrompts({ problemInfo, language }),
         [],
         signal,
         (chunk) => {

@@ -60,6 +60,11 @@ export class ShortcutsHelper {
       this.deps.moveWindowLeft()
     })
 
+    globalShortcut.register("CommandOrControl+Q", () => {
+      console.log('Ctrl+Q 触发退出');
+      app.quit(); // 退出应用
+    })
+
     globalShortcut.register("CommandOrControl+Right", () => {
       console.log("Command/Ctrl + Right pressed. Moving window right.")
       this.deps.moveWindowRight()

@@ -37,19 +37,15 @@ function App() {
     description: "",
     variant: "neutral" as const
   })
-  const [credits, setCredits] = useState<number>(0)
-  const [currentLanguage, setCurrentLanguage] = useState<string>("python")
   const [isInitialized, setIsInitialized] = useState(false)
 
   // Helper function to safely update credits
   const updateCredits = useCallback((newCredits: number) => {
-    setCredits(newCredits)
     window.__CREDITS__ = newCredits
   }, [])
 
   // Helper function to safely update language
   const updateLanguage = useCallback((newLanguage: string) => {
-    setCurrentLanguage(newLanguage)
     window.__LANGUAGE__ = newLanguage
   }, [])
 
