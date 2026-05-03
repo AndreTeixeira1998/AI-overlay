@@ -1,5 +1,5 @@
 {
-  "name": "interview-coder-v1",
+  "name": "ai-overlay",
   "version": "1.0.19",
   "main": "dist-electron/main.js",
   "scripts": {
@@ -8,7 +8,7 @@
     "build": "cross-env NODE_ENV=production rimraf dist dist-electron && vite build && tsc -p tsconfig.electron.json && electron-builder"
   },
   "build": {
-    "appId": "com.franklin.interviewcoder",
+    "appId": "com.aioverlay.app",
     "productName": "System UI Helper",
     "files": [
       "dist/**/*",
@@ -53,9 +53,9 @@
         "LSUIElement": true
       },
       "protocols": {
-        "name": "interview-coder-protocol",
+        "name": "ai-overlay-protocol",
         "schemes": [
-          "interview-coder"
+          "ai-overlay"
         ]
       }
     },
@@ -66,9 +66,9 @@
       "icon": "assets/icons/win/icon.ico",
       "artifactName": "System-UI-Helper-Windows-${version}.${ext}",
       "protocols": {
-        "name": "interview-coder-protocol",
+        "name": "ai-overlay-protocol",
         "schemes": [
-          "interview-coder"
+          "ai-overlay"
         ]
       }
     },
@@ -79,17 +79,17 @@
       "icon": "assets/icons/png/icon-256x256.png",
       "artifactName": "System-UI-Helper-Linux-${version}.${ext}",
       "protocols": {
-        "name": "interview-coder-protocol",
+        "name": "ai-overlay-protocol",
         "schemes": [
-          "interview-coder"
+          "ai-overlay"
         ]
       }
     },
     "publish": [
       {
         "provider": "github",
-        "owner": "ibttf",
-        "repo": "interview-coder",
+        "owner": "AndreTeixeira1998",
+        "repo": "AI-overlay",
         "private": false,
         "releaseType": "release"
       }
@@ -110,7 +110,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "An invisible desktop application to help you pass your technical interviews.",
+  "description": "AI Overlay — an invisible AI-powered desktop overlay.",
   "dependencies": {
     "@electron/notarize": "^2.3.0",
     "@emotion/react": "^11.11.0",

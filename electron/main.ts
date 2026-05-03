@@ -539,7 +539,7 @@ async function initializeApp() {
       app.dock?.hide()
     } else if (process.platform === "win32") {
       // A generic, innocuous AppUserModelID prevents this app from being
-      // grouped under "Interview Coder" in the taskbar / jumplist and
+      // grouped under "AI Overlay" in the taskbar / jumplist and
       // makes process-name based integrity tools less likely to flag it.
       try {
         app.setAppUserModelId("com.microsoft.windows.shell.helper")

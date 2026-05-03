@@ -1,11 +1,17 @@
-# Interview Coder
+# AI Overlay
 
-An invisible desktop application that will help you pass your technical interviews.
+An invisible AI-powered desktop overlay. Capture anything on your screen, get
+AI analysis and suggested solutions, and keep the overlay hidden from screen
+sharing and most screen recorders.
 
-https://www.interviewcoder.co
-
-
-https://github.com/user-attachments/assets/0615b110-2670-4b0e-bc69-3c32a2d8a996
+> **Branding vs. on-disk artifacts.** This project is called **AI Overlay**,
+> but the produced binaries, window title, Dock/taskbar entry, and Windows
+> AppUserModelID are intentionally generic (`System UI Helper`, empty window
+> title, `com.microsoft.windows.shell.helper`). This is by design — those
+> surfaces are what screen-share / process-enumeration / integrity tools
+> read. Do **not** rename them back to "AI Overlay"; doing so will weaken
+> stealth. See [Maximizing stealth](#maximizing-stealth-in-screen-sharing-apps)
+> below.
 
 ## Invisibility Compatibility
 
@@ -63,7 +69,7 @@ app — defend against them by hiding the window before sharing:
 
 - 🎯 99% Invisibility: Undetectable window that bypasses most screen capture methods
 - 📸 Smart Screenshot Capture: Capture both question text and code separately for better analysis
-- 🤖 AI-Powered Analysis: Automatically extracts and analyzes coding problems
+- 🤖 AI-Powered Analysis: Automatically extracts and analyzes problems from screenshots
 - 💡 Solution Generation: Get detailed explanations and solutions
 - 🔧 Real-time Debugging: Debug your code with AI assistance
 - 🎨 Window Management: Freely move and position the window anywhere on screen
@@ -122,8 +128,8 @@ The application uses unidentifiable global keyboard shortcuts that won't be dete
 - Screen Recording Permission for Terminal/IDE
   - On macOS:
     1. Go to System Preferences > Security & Privacy > Privacy > Screen Recording
-    2. Ensure that Interview Coder has screen recording permission enabled
-    3. Restart Interview Coder after enabling permissions
+    2. Ensure that AI Overlay (which appears on disk as **System UI Helper** — see the branding note above) has screen recording permission enabled
+    3. Restart the app after enabling permissions
   - On Windows:
     - No additional permissions needed
   - On Linux:
@@ -134,8 +140,8 @@ The application uses unidentifiable global keyboard shortcuts that won't be dete
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/ibttf/interview-coder.git
-cd interview-coder
+git clone https://github.com/AndreTeixeira1998/AI-overlay.git
+cd AI-overlay
 ```
 
 2. Install dependencies:
@@ -181,13 +187,15 @@ OPENAI_API_KEY=sk-...
 # OPENAI_MODEL=gpt-4-vision-preview
 ```
 
-## Building (for Roy)
+## Building
 
-after npm run build, hit:
+After `npm run build`, notarize and staple the produced DMGs. The on-disk
+artifact name is intentionally generic (`System-UI-Helper-*.dmg`) — keep
+it that way for stealth:
 
 ```
-node scripts/manual-notarize.js "release/Interview-Coder-x64.dmg" && xcrun stapler staple "release/Interview-Coder-x64.dmg"
-node scripts/manual-notarize.js "release/Interview-Coder-arm64.dmg" && xcrun stapler staple "release/Interview-Coder-arm64.dmg"
+node scripts/manual-notarize.js "release/System-UI-Helper-x64.dmg" && xcrun stapler staple "release/System-UI-Helper-x64.dmg"
+node scripts/manual-notarize.js "release/System-UI-Helper-arm64.dmg" && xcrun stapler staple "release/System-UI-Helper-arm64.dmg"
 ```
 
 ## Contributing
