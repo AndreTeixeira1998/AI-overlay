@@ -40,28 +40,28 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
     <div>
       <div className="pt-2 w-fit">
         <div className="text-xs text-white/90 backdrop-blur-md bg-black/60 rounded-lg py-2 px-4 flex items-center justify-center gap-4">
-          {/* 截图 */}
+          {/* Screenshot */}
           <div
             className="flex items-center gap-2 cursor-pointer rounded px-2 py-1.5 hover:bg-white/10 transition-colors"
             onClick={async () => {
               try {
                 const result = await window.electronAPI.triggerScreenshot()
                 if (!result.success) {
-                  console.error("截图失败:", result.error)
-                  showToast("错误", "截图失败", "error")
+                  console.error("Screenshot failed:", result.error)
+                  showToast("Error", "Screenshot failed", "error")
                 }
               } catch (error) {
-                console.error("截图时发生错误:", error)
-                showToast("错误", "截图失败", "error")
+                console.error("Error while taking screenshot:", error)
+                showToast("Error", "Screenshot failed", "error")
               }
             }}
           >
             <span className="text-[11px] leading-none truncate">
               {screenshotCount === 0
-                ? "截第一张图"
+                ? "Take first screenshot"
                 : screenshotCount === 1
-                  ? "截第二张图"
-                  : "重置第一张图"}
+                  ? "Take second screenshot"
+                  : "Reset first screenshot"}
             </span>
             <div className="flex gap-1">
               <button className="bg-white/10 rounded-md px-1.5 py-1 text-[11px] leading-none text-white/70">
@@ -73,7 +73,7 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
             </div>
           </div>
 
-          {/* 解题命令 */}
+          {/* Solve command */}
           {screenshotCount > 0 && (
             <>
               <div
@@ -84,19 +84,19 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
                       await window.electronAPI.triggerProcessScreenshots()
                     if (!result.success) {
                       console.error(
-                        "处理截图失败:",
+                        "Failed to process screenshots:",
                         result.error
                       )
-                      showToast("错误", "处理截图失败", "error")
+                      showToast("Error", "Failed to process screenshots", "error")
                     }
                   } catch (error) {
-                    console.error("处理截图时发生错误:", error)
-                    showToast("错误", "处理截图失败", "error")
+                    console.error("Error while processing screenshots:", error)
+                    showToast("Error", "Failed to process screenshots", "error")
                   }
                 }}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] leading-none text-nowrap">解题</span>
+                  <span className="text-[11px] leading-none text-nowrap">Solve</span>
                   <div className="flex gap-1 ml-2">
                     <button className="bg-white/10 rounded-md px-1.5 py-1 text-[11px] leading-none text-white/70">
                       {COMMAND_KEY}
@@ -114,16 +114,16 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
                     const result =
                       await window.electronAPI.triggerProcessScreenshots()
                     if (!result.success) {
-                      console.error("处理截图失败:", result.error)
-                      showToast("错误", "处理截图失败", "error")
+                      console.error("Failed to process screenshots:", result.error)
+                      showToast("Error", "Failed to process screenshots", "error")
                     }
                   } catch (error) {
-                    console.error("处理截图出错:", error)
-                    showToast("错误", "处理截图失败", "error")
+                    console.error("Error processing screenshots:", error)
+                    showToast("Error", "Failed to process screenshots", "error")
                   }
                 }}
               >
-                <span className="text-[11px] leading-none text-nowrap">调试</span>
+                <span className="text-[11px] leading-none text-nowrap">Debug</span>
                 <div className="flex gap-1">
                   <button className="bg-white/10 rounded-md px-1.5 py-1 text-[11px] leading-none text-white/70">
                     {COMMAND_KEY}
@@ -137,16 +137,16 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
 
           )}
 
-          {/* 分隔线 */}
+          {/* Divider */}
           <div className="mx-2 h-4 w-px bg-white/20" />
 
-          {/* 设置和提示框 */}
+          {/* Settings and tooltip */}
           <div
             className="relative inline-block"
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
           >
-            {/* 设置图标 */}
+            {/* Settings icon */}
             <div className="w-4 h-4 flex items-center justify-center cursor-pointer text-white/70 hover:text-white/90 transition-colors">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -163,20 +163,20 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
               </svg>
             </div>
 
-            {/* 提示框内容 */}
+            {/* Tooltip content */}
             {isTooltipVisible && (
               <div
                 ref={tooltipRef}
                 className="absolute top-full left-0 mt-2 w-80 transform -translate-x-[calc(50%-12px)]"
                 style={{ zIndex: 100 }}
               >
-                {/* 添加透明连接桥 */}
+                {/* Add transparent connecting bridge */}
                 <div className="absolute -top-2 right-0 w-full h-2" />
                 <div className="p-3 text-xs bg-black/80 backdrop-blur-md rounded-lg border border-white/10 text-white/90 shadow-lg">
                   <div className="space-y-4">
-                    <h3 className="font-medium truncate">键盘快捷键</h3>
+                    <h3 className="font-medium truncate">Keyboard shortcuts</h3>
                     <div className="space-y-3">
-                      {/* 切换窗口命令 */}
+                      {/* Toggle window */}
                       <div
                         className="cursor-pointer rounded px-2 py-1.5 hover:bg-white/10 transition-colors"
                         onClick={async () => {
@@ -185,27 +185,27 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
                               await window.electronAPI.toggleMainWindow()
                             if (!result.success) {
                               console.error(
-                                "切换窗口失败:",
+                                "Toggle window failed:",
                                 result.error
                               )
                               showToast(
-                                "错误",
-                                "切换窗口失败",
+                                "Error",
+                                "Toggle window failed",
                                 "error"
                               )
                             }
                           } catch (error) {
-                            console.error("切换窗口时发生错误:", error)
+                            console.error("Error while toggling window:", error)
                             showToast(
-                              "错误",
-                              "切换窗口失败",
+                              "Error",
+                              "Toggle window failed",
                               "error"
                             )
                           }
                         }}
                       >
                         <div className="flex items-center justify-between">
-                          <span className="truncate">切换窗口</span>
+                          <span className="truncate">Toggle window</span>
                           <div className="flex gap-1 flex-shrink-0">
                             <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px] leading-none">
                               {COMMAND_KEY}
@@ -216,11 +216,11 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
                           </div>
                         </div>
                         <p className="text-[10px] leading-relaxed text-white/70 truncate mt-1">
-                          显示或隐藏此窗口。
+                          Show or hide this window.
                         </p>
                       </div>
 
-                      {/* 截图命令 */}
+                      {/* Screenshot */}
                       <div
                         className="cursor-pointer rounded px-2 py-1.5 hover:bg-white/10 transition-colors"
                         onClick={async () => {
@@ -229,27 +229,27 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
                               await window.electronAPI.triggerScreenshot()
                             if (!result.success) {
                               console.error(
-                                "截图失败:",
+                                "Screenshot failed:",
                                 result.error
                               )
                               showToast(
-                                "错误",
-                                "截图失败",
+                                "Error",
+                                "Screenshot failed",
                                 "error"
                               )
                             }
                           } catch (error) {
-                            console.error("截图时发生错误:", error)
+                            console.error("Error while taking screenshot:", error)
                             showToast(
-                              "错误",
-                              "截图失败",
+                              "Error",
+                              "Screenshot failed",
                               "error"
                             )
                           }
                         }}
                       >
                         <div className="flex items-center justify-between">
-                          <span className="truncate">截取屏幕</span>
+                          <span className="truncate">Capture screen</span>
                           <div className="flex gap-1 flex-shrink-0">
                             <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px] leading-none">
                               {COMMAND_KEY}
@@ -260,11 +260,11 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
                           </div>
                         </div>
                         <p className="text-[10px] leading-relaxed text-white/70 truncate mt-1">
-                          截取题目描述的屏幕截图。
+                          Capture a screenshot of the problem description.
                         </p>
                       </div>
 
-                      {/* 解题命令 */}
+                      {/* Solve command */}
                       <div
                         className={`cursor-pointer rounded px-2 py-1.5 hover:bg-white/10 transition-colors ${screenshotCount > 0
                           ? ""
@@ -278,30 +278,30 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
                               await window.electronAPI.triggerProcessScreenshots()
                             if (!result.success) {
                               console.error(
-                                "处理截图失败:",
+                                "Failed to process screenshots:",
                                 result.error
                               )
                               showToast(
-                                "错误",
-                                "处理截图失败",
+                                "Error",
+                                "Failed to process screenshots",
                                 "error"
                               )
                             }
                           } catch (error) {
                             console.error(
-                              "处理截图时发生错误:",
+                              "Error while processing screenshots:",
                               error
                             )
                             showToast(
-                              "错误",
-                              "处理截图失败",
+                              "Error",
+                              "Failed to process screenshots",
                               "error"
                             )
                           }
                         }}
                       >
                         <div className="flex items-center justify-between">
-                          <span className="truncate text-nowrap">解题</span>
+                          <span className="truncate text-nowrap">Solve</span>
                           <div className="flex gap-1 flex-shrink-0">
                             <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px] leading-none">
                               {COMMAND_KEY}
@@ -313,8 +313,8 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
                         </div>
                         <p className="text-[10px] leading-relaxed text-white/70 truncate mt-1">
                           {screenshotCount > 0
-                            ? "根据当前问题生成解决方案。"
-                            : "请先截图以生成解决方案。"}
+                            ? "Generate a solution for the current problem."
+                            : "Take a screenshot first to generate a solution."}
                         </p>
                       </div>
                     </div>
@@ -326,30 +326,30 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
                             await window.electronAPI.triggerProcessScreenshots()
                           if (!result.success) {
                             console.error(
-                              "处理截图失败:",
+                              "Failed to process screenshots:",
                               result.error
                             )
                             showToast(
-                              "错误",
-                              "处理截图失败",
+                              "Error",
+                              "Failed to process screenshots",
                               "error"
                             )
                           }
                         } catch (error) {
                           console.error(
-                            "处理截图出错:",
+                            "Error processing screenshots:",
                             error
                           )
                           showToast(
-                            "错误",
-                            "处理截图失败",
+                            "Error",
+                            "Failed to process screenshots",
                             "error"
                           )
                         }
                       }}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="truncate">调试</span>
+                        <span className="truncate">Debug</span>
                         <div className="flex gap-1 flex-shrink-0">
                           <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px] leading-none">
                             {COMMAND_KEY}
@@ -360,10 +360,10 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
                         </div>
                       </div>
                       <p className="text-[10px] leading-relaxed text-white/70 truncate mt-1">
-                        基于所有之前和新添加的截图生成新的解决方案。
+                        Generate a new solution from all previous and newly added screenshots.
                       </p>
                     </div> */}
-                    {/* 重新开始 - 始终可见 */}
+                    {/* Start over — always visible */}
                     <div
                       className="cursor-pointer rounded px-2 py-1.5 hover:bg-white/10 transition-colors"
                       onClick={async () => {
@@ -371,17 +371,17 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
                           const result =
                             await window.electronAPI.triggerReset()
                           if (!result.success) {
-                            console.error("重置失败:", result.error)
-                            showToast("错误", "重置失败", "error")
+                            console.error("Reset failed:", result.error)
+                            showToast("Error", "Reset failed", "error")
                           }
                         } catch (error) {
-                          console.error("重置出错:", error)
-                          showToast("错误", "重置失败", "error")
+                          console.error("Reset error:", error)
+                          showToast("Error", "Reset failed", "error")
                         }
                       }}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="truncate">重新开始</span>
+                        <span className="truncate">Start over</span>
                         <div className="flex gap-1 flex-shrink-0">
                           <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px] leading-none">
                             {COMMAND_KEY}
@@ -392,10 +392,10 @@ const QueueCommands: React.FC<QueueCommandsProps> = ({
                         </div>
                       </div>
                       <p className="text-[10px] leading-relaxed text-white/70 truncate mt-1">
-                        开始一个新的问题。
+                        Start a new problem.
                       </p>
                     </div>
-                    {/* 分隔线和语言选择器 */}
+                    {/* Divider and language selector */}
                     <div className="pt-3 mt-3 border-t border-white/10">
                       <LanguageSelector
                         currentLanguage={currentLanguage}

@@ -61,8 +61,8 @@ export class ShortcutsHelper {
     })
 
     globalShortcut.register("CommandOrControl+Q", () => {
-      console.log('Ctrl+Q 触发退出');
-      app.quit(); // 退出应用
+      console.log('Ctrl+Q triggered quit');
+      app.quit(); // Quit the application
     })
 
     globalShortcut.register("CommandOrControl+Right", () => {

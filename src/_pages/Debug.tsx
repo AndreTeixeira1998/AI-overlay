@@ -26,7 +26,7 @@ const CodeSection = ({
       <div className="space-y-1.5">
         <div className="mt-4 flex">
           <p className="text-xs bg-gradient-to-r from-gray-300 via-gray-100 to-gray-300 bg-clip-text text-transparent animate-pulse">
-            正在加载解决方案...
+            Loading solution...
           </p>
         </div>
       </div>
@@ -56,7 +56,7 @@ const CodeSection = ({
 async function fetchScreenshots(): Promise<Screenshot[]> {
   try {
     const existing = await window.electronAPI.getScreenshots()
-    console.log("Debug中的原始截图数据:", existing)
+    console.log("Raw screenshot data in Debug:", existing)
     return (Array.isArray(existing) ? existing : []).map((p) => ({
       id: p.path,
       path: p.path,
@@ -64,7 +64,7 @@ async function fetchScreenshots(): Promise<Screenshot[]> {
       timestamp: Date.now()
     }))
   } catch (error) {
-    console.error("加载截图时出错:", error)
+    console.error("Error loading screenshots:", error)
     throw error
   }
 }
@@ -107,7 +107,7 @@ const Debug: React.FC<DebugProps> = ({
   const contentRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    // 尝试获取缓存中的新解决方案数据
+    // Try to get the new solution data from the cache
     const newSolution = queryClient.getQueryData(["new_solution"]) as {
       new_code: string
       thoughts: string[]
@@ -115,7 +115,7 @@ const Debug: React.FC<DebugProps> = ({
       space_complexity: string
     } | null
 
-    // 如果有缓存数据，设置所有状态变量为缓存数据
+    // If cached data exists, set all state variables from the cache
     if (newSolution) {
       setNewCode(newSolution.new_code || null)
       setThoughtsData(newSolution.thoughts || null)
@@ -124,7 +124,7 @@ const Debug: React.FC<DebugProps> = ({
       setIsProcessing(false)
     }
 
-    // 设置事件监听器
+    // Set up event listeners
     const cleanupFunctions = [
       window.electronAPI.onScreenshotTaken(() => refetch()),
       window.electronAPI.onResetView(() => refetch()),
@@ -136,16 +136,16 @@ const Debug: React.FC<DebugProps> = ({
       }),
       window.electronAPI.onDebugError((error: string) => {
         showToast(
-          "处理失败",
-          "调试代码时出现错误。",
+          "Processing failed",
+          "An error occurred while debugging the code.",
           "error"
         )
         setIsProcessing(false)
-        console.error("处理错误:", error)
+        console.error("Processing error:", error)
       })
     ]
 
-    // 设置调整大小观察器
+    // Set up the resize observer
     const updateDimensions = () => {
       if (contentRef.current) {
         let contentHeight = contentRef.current.scrollHeight
@@ -188,16 +188,16 @@ const Debug: React.FC<DebugProps> = ({
       if (response.success) {
         refetch()
       } else {
-        console.error("删除额外截图失败:", response.error)
+        console.error("Failed to delete extra screenshot:", response.error)
       }
     } catch (error) {
-      console.error("删除额外截图时出错:", error)
+      console.error("Error deleting extra screenshot:", error)
     }
   }
 
   return (
     <div ref={contentRef} className="relative space-y-3 px-4 py-3">
-      {/* 有条件地渲染截图队列 */}
+      {/* Conditionally render the screenshot queue */}
       <div className="bg-transparent w-fit">
         <div className="pb-3">
           <div className="space-y-3 w-fit">
@@ -210,7 +210,7 @@ const Debug: React.FC<DebugProps> = ({
         </div>
       </div>
 
-      {/* 带工具提示的命令导航栏 */}
+      {/* Command bar with tooltip */}
       <SolutionCommands
         screenshots={screenshots}
         onTooltipVisibilityChange={handleTooltipVisibilityChange}
@@ -220,13 +220,13 @@ const Debug: React.FC<DebugProps> = ({
         setLanguage={setLanguage}
       />
 
-      {/* 主要内容 */}
+      {/* Main content */}
       <div className="w-full text-sm text-black bg-black/60 rounded-md">
         <div className="rounded-lg overflow-hidden">
           <div className="px-4 py-3 space-y-4">
-            {/* 思路部分 */}
+            {/* Thoughts section */}
             <ContentSection
-              title="思路"
+              title="Thoughts"
               content={
                 thoughtsData && (
                   <div className="space-y-3">
@@ -244,15 +244,15 @@ const Debug: React.FC<DebugProps> = ({
               isLoading={!thoughtsData}
             />
 
-            {/* 代码部分 */}
+            {/* Code section */}
             <CodeSection
-              title="代码"
+              title="Code"
               code={newCode}
               isLoading={!newCode}
               currentLanguage={currentLanguage}
             />
 
-            {/* 复杂度部分 */}
+            {/* Complexity section */}
             <ComplexitySection
               timeComplexity={timeComplexityData}
               spaceComplexity={spaceComplexityData}

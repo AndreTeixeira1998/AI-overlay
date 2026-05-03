@@ -264,7 +264,7 @@ async function createWindow(): Promise<void> {
     return { action: "deny" }
   })
 
-  // 增强的屏幕捕获阻力
+  // Enhanced screen-capture resistance
   state.mainWindow.setContentProtection(true)
 
   state.mainWindow.setVisibleOnAllWorkspaces(true, {
@@ -272,25 +272,25 @@ async function createWindow(): Promise<void> {
   })
   state.mainWindow.setAlwaysOnTop(true, "screen-saver", 1)
 
-  // 其他屏幕截图阻力设置
+  // Additional screenshot-resistance settings
   if (process.platform === "darwin") {
-    // 防止窗口在屏幕截图中被捕获
+    // Prevent the window from being captured in screenshots
     state.mainWindow.setHiddenInMissionControl(true)
     state.mainWindow.setWindowButtonVisibility(false)
     state.mainWindow.setBackgroundColor("#00000000")
 
-    // 防止窗口包含在窗口切换器中
+    // Prevent the window from showing in the window switcher
     state.mainWindow.setSkipTaskbar(true)
 
-    // 禁用窗口阴影
+    // Disable the window shadow
     state.mainWindow.setHasShadow(false)
   }
 
-  // 防止屏幕录制捕获窗口
+  // Prevent screen recording from capturing the window
   state.mainWindow.webContents.setBackgroundThrottling(false)
   state.mainWindow.webContents.setFrameRate(60)
 
-  // 设置窗口监听器
+  // Set up window listeners
   state.mainWindow.on("move", handleWindowMove)
   state.mainWindow.on("resize", handleWindowResize)
   state.mainWindow.on("closed", handleWindowClosed)

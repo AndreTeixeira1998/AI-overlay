@@ -50,7 +50,7 @@ export function initializeIpcHandlers(deps: IIpcHandlerDeps): void {
     try {
       let previews = []
       const currentView = deps.getView()
-      console.log('当前的视图',currentView)
+      console.log('Current view:',currentView)
       if (currentView === "queue") {
         const queue = deps.getScreenshotQueue()
         previews = await Promise.all(
@@ -81,7 +81,7 @@ export function initializeIpcHandlers(deps: IIpcHandlerDeps): void {
     const mainWindow = deps.getMainWindow()
     if (mainWindow) {
       try {
-        //进行截图
+        //Take a screenshot
         const screenshotPath = await deps.takeScreenshot()
         const preview = await deps.getImagePreview(screenshotPath)
         mainWindow.webContents.send("screenshot-taken", {

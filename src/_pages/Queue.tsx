@@ -6,7 +6,7 @@ import QueueCommands from "../components/Queue/QueueCommands"
 import { useToast } from "../contexts/toast"
 import { Screenshot } from "../types/screenshots"
 
-//获取截图
+//Fetch screenshots
 async function fetchScreenshots(): Promise<Screenshot[]> {
   try {
     const existing = await window.electronAPI.getScreenshots()
