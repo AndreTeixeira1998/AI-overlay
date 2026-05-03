@@ -8,11 +8,7 @@ interface ElectronAPI {
     width: number
     height: number
   }) => Promise<void>
-  getScreenshots: () => Promise<{
-    success: boolean
-    previews?: Array<{ path: string; preview: string }> | null
-    error?: string
-  }>
+  getScreenshots: () => Promise<Array<{ path: string; preview: string }>>
   deleteScreenshot: (
     path: string
   ) => Promise<{ success: boolean; error?: string }>
