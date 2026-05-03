@@ -79,6 +79,7 @@ export interface IShortcutsHelperDeps {
   setView: (view: "queue" | "solutions" | "debug") => void
   isVisible: () => boolean
   toggleMainWindow: () => void
+  panicHideMainWindow: () => void
   moveWindowLeft: () => void
   moveWindowRight: () => void
   moveWindowUp: () => void
@@ -137,6 +138,7 @@ function initializeHelpers() {
     setView,
     isVisible: () => state.isWindowVisible,
     toggleMainWindow,
+    panicHideMainWindow,
     moveWindowLeft: () =>
       moveWindowHorizontal((x) =>
         Math.max(-(state.windowSize?.width || 0) / 2, x - state.step)
@@ -169,6 +171,25 @@ if (!gotTheLock) {
 }
 
 // Window management functions
+
+// Centralized stealth/anti-capture configuration applied to a window. Keep
+// this idempotent so it can be safely re-asserted on lifecycle events
+// (move/resize/show/display-change) where the underlying OS flag has been
+// observed to lapse on some macOS / Windows builds.
+function applyStealth(win: BrowserWindow): void {
+  if (!win || win.isDestroyed()) return
+  try {
+    // Maps to NSWindowSharingNone (macOS) and WDA_EXCLUDEFROMCAPTURE (Win10
+    // build 2004+). Honored by ScreenCaptureKit, Windows.Graphics.Capture
+    // and Chromium's modern getDisplayMedia path used by Meet/Zoom/Teams.
+    win.setContentProtection(true)
+    win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
+    win.setAlwaysOnTop(true, "screen-saver", 1)
+  } catch (err) {
+    console.warn("applyStealth failed:", err)
+  }
+}
+
 async function createWindow(): Promise<void> {
   if (state.mainWindow) {
     if (state.mainWindow.isMinimized()) state.mainWindow.restore()
@@ -260,15 +281,11 @@ async function createWindow(): Promise<void> {
     return { action: "deny" }
   })
 
-  // Enhanced screen-capture resistance
-  state.mainWindow.setContentProtection(true)
+  // Enhanced screen-capture resistance — applied via applyStealth so it can be
+  // re-asserted on events that have historically dropped the exclude flag.
+  applyStealth(state.mainWindow)
 
-  state.mainWindow.setVisibleOnAllWorkspaces(true, {
-    visibleOnFullScreen: true
-  })
-  state.mainWindow.setAlwaysOnTop(true, "screen-saver", 1)
-
-  // Additional screenshot-resistance settings
+  // Platform-specific window-fingerprint hardening
   if (process.platform === "darwin") {
     // Prevent the window from being captured in screenshots
     state.mainWindow.setHiddenInMissionControl(true)
@@ -280,16 +297,69 @@ async function createWindow(): Promise<void> {
 
     // Disable the window shadow
     state.mainWindow.setHasShadow(false)
+  } else if (process.platform === "win32") {
+    // Mirror the macOS hardening on Windows: keep the overlay out of the
+    // taskbar / Alt-Tab list and drop the drop-shadow which can otherwise
+    // leak the window outline through some legacy capture paths.
+    state.mainWindow.setSkipTaskbar(true)
+    state.mainWindow.setHasShadow(false)
   }
 
   // Prevent screen recording from capturing the window
   state.mainWindow.webContents.setBackgroundThrottling(false)
   state.mainWindow.webContents.setFrameRate(60)
 
+  // DevTools opens in its own BrowserWindow which does NOT inherit
+  // setContentProtection. Re-apply it whenever DevTools is attached so the
+  // overlay stays hidden from screen-share even while developing.
+  state.mainWindow.webContents.on("devtools-opened", () => {
+    const dt = state.mainWindow?.webContents
+    if (!dt) return
+    try {
+      // @ts-ignore - devToolsWebContents is available in Electron runtime
+      const devToolsWebContents = (dt as any).devToolsWebContents
+      if (devToolsWebContents) {
+        const devToolsWin = BrowserWindow.fromWebContents(devToolsWebContents)
+        devToolsWin?.setContentProtection(true)
+      }
+    } catch (err) {
+      console.warn("Failed to apply content protection to DevTools:", err)
+    }
+  })
+
   // Set up window listeners
-  state.mainWindow.on("move", handleWindowMove)
-  state.mainWindow.on("resize", handleWindowResize)
+  state.mainWindow.on("move", () => {
+    handleWindowMove()
+    // Re-assert on move: WDA_EXCLUDEFROMCAPTURE / NSWindowSharingNone have
+    // been observed to be dropped after window reparenting on some OS builds.
+    if (state.mainWindow) applyStealth(state.mainWindow)
+  })
+  state.mainWindow.on("resize", () => {
+    handleWindowResize()
+    if (state.mainWindow) applyStealth(state.mainWindow)
+  })
+  state.mainWindow.on("show", () => {
+    if (state.mainWindow) applyStealth(state.mainWindow)
+  })
+  state.mainWindow.on("restore", () => {
+    if (state.mainWindow) applyStealth(state.mainWindow)
+  })
+  state.mainWindow.webContents.on("did-finish-load", () => {
+    if (state.mainWindow) applyStealth(state.mainWindow)
+  })
   state.mainWindow.on("closed", handleWindowClosed)
+
+  // Re-assert stealth on display configuration changes (lid open/close,
+  // monitor plug, resolution change) — these have all been reported as
+  // moments where capture-exclusion can silently lapse.
+  const reapplyOnDisplayChange = () => {
+    if (state.mainWindow && !state.mainWindow.isDestroyed()) {
+      applyStealth(state.mainWindow)
+    }
+  }
+  screen.on("display-added", reapplyOnDisplayChange)
+  screen.on("display-removed", reapplyOnDisplayChange)
+  screen.on("display-metrics-changed", reapplyOnDisplayChange)
 
   // Initialize window state
   const bounds = state.mainWindow.getBounds()
@@ -347,11 +417,7 @@ function showMainWindow(): void {
       })
     }
     state.mainWindow.setIgnoreMouseEvents(false)
-    state.mainWindow.setAlwaysOnTop(true, "screen-saver", 1)
-    state.mainWindow.setVisibleOnAllWorkspaces(true, {
-      visibleOnFullScreen: true
-    })
-    state.mainWindow.setContentProtection(true)
+    applyStealth(state.mainWindow)
     state.mainWindow.setOpacity(0)
     state.mainWindow.showInactive()
     state.mainWindow.setOpacity(1)
@@ -361,6 +427,19 @@ function showMainWindow(): void {
 
 function toggleMainWindow(): void {
   state.isWindowVisible ? hideMainWindow() : showMainWindow()
+}
+
+// Panic-hide: a hard hide() (not just opacity 0) for the cases where the
+// modern OS-level capture exclusion can't be trusted (older Zoom desktop
+// using BitBlt/DXGI duplication, Linux/Wayland, hardware capture, etc.).
+// A truly hidden window cannot appear in any capture path.
+function panicHideMainWindow(): void {
+  if (!state.mainWindow || state.mainWindow.isDestroyed()) return
+  const bounds = state.mainWindow.getBounds()
+  state.windowPosition = { x: bounds.x, y: bounds.y }
+  state.windowSize = { width: bounds.width, height: bounds.height }
+  state.mainWindow.hide()
+  state.isWindowVisible = false
 }
 
 // Window movement functions
@@ -450,6 +529,25 @@ function getAIConfig(): AIConfig {
 // Initialize application
 async function initializeApp() {
   try {
+    // Reduce process / window fingerprint exposed to other apps and to the
+    // OS shell. Done as early as possible so it applies before any window
+    // is created.
+    if (process.platform === "darwin") {
+      // Hide from the Dock and Cmd-Tab. Combined with LSUIElement in
+      // Info.plist (set via electron-builder extendInfo) this keeps the
+      // app out of the normal app-list surfaces.
+      app.dock?.hide()
+    } else if (process.platform === "win32") {
+      // A generic, innocuous AppUserModelID prevents this app from being
+      // grouped under "Interview Coder" in the taskbar / jumplist and
+      // makes process-name based integrity tools less likely to flag it.
+      try {
+        app.setAppUserModelId("com.microsoft.windows.shell.helper")
+      } catch (err) {
+        console.warn("setAppUserModelId failed:", err)
+      }
+    }
+
     loadEnvVariables()
     initializeHelpers()
     initializeIpcHandlers({
@@ -594,6 +692,7 @@ export {
   hideMainWindow,
   showMainWindow,
   toggleMainWindow,
+  panicHideMainWindow,
   setWindowDimensions,
   moveWindowHorizontal,
   moveWindowVertical,

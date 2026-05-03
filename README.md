@@ -22,6 +22,43 @@ Note: The application is **NOT** invisible to:
   - https://zoom.en.uptodown.com/mac/versions (link to downgrade Zoom if needed)
 - Mac OS native screen _recording_ (Command + Shift + 5)
 
+### Maximizing stealth in screen-sharing apps
+
+The overlay relies on the OS-level capture-exclusion flag
+(`NSWindowSharingNone` on macOS, `WDA_EXCLUDEFROMCAPTURE` on Windows 10
+build 2004+). This is honored by the modern capture paths used by Zoom,
+Microsoft Teams, Google Meet (desktop and browser), and any app that
+captures via `getDisplayMedia` on Chromium 100+. To get the strongest
+results:
+
+- **Zoom (desktop):** in Zoom → Settings → Share Screen, prefer the option
+  that uses the windowing-system capture method ("Use the new capture
+  method"/"Capture with the windowing system"). Older Zoom builds fall
+  back to `BitBlt`/DXGI duplication, which bypasses the OS exclude flag.
+  Update Zoom to the latest version, or downgrade to ≤ 6.1.5 if needed
+  (see link above).
+- **Microsoft Teams / Google Meet:** modern releases use Windows Graphics
+  Capture (Windows) or ScreenCaptureKit (macOS 12.3+) and respect the
+  exclude flag automatically — no user action required.
+- **Windows:** ensure you are on Windows 10 build 2004 (May 2020 Update)
+  or later. Earlier builds do not support `WDA_EXCLUDEFROMCAPTURE`.
+- **macOS:** macOS 10.15 Catalina or later is required for reliable
+  exclusion under ScreenCaptureKit/CGDisplayStream.
+- **Linux / Wayland:** the PipeWire screencast portal does not currently
+  expose a per-window exclusion API. The overlay **cannot be reliably
+  hidden** from screen-sharing on Linux/Wayland today. Use the panic-hide
+  shortcut (below) before sharing.
+
+### Limitations that cannot be solved from inside the app
+
+These bypass every OS exclusion flag and are unsolvable from an Electron
+app — defend against them by hiding the window before sharing:
+
+- OBS, ffmpeg, or any third-party screen recorder that captures via raw
+  desktop duplication.
+- Hardware HDMI capture cards / external recorders.
+- A phone or camera physically pointed at your screen.
+
 ## Features
 
 - 🎯 99% Invisibility: Undetectable window that bypasses most screen capture methods
@@ -36,6 +73,7 @@ Note: The application is **NOT** invisible to:
 The application uses unidentifiable global keyboard shortcuts that won't be detected by browsers or other applications:
 
 - Toggle Window Visibility: [Control or Cmd + b]
+- Panic Hide (hard hide for capture paths the OS exclude flag can't defeat): [Control or Cmd + \\]
 - Move Window: [Control or Cmd + arrows]
 - Take Screenshot: [Control or Cmd + H]
 - Process Screenshots: [Control or Cmd + Enter]

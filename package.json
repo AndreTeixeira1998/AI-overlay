@@ -9,7 +9,7 @@
   },
   "build": {
     "appId": "com.franklin.interviewcoder",
-    "productName": "Interview Coder",
+    "productName": "System UI Helper",
     "files": [
       "dist/**/*",
       "dist-electron/**/*",
@@ -41,7 +41,7 @@
           ]
         }
       ],
-      "artifactName": "Interview-Coder-${arch}.${ext}",
+      "artifactName": "System-UI-Helper-${arch}.${ext}",
       "icon": "assets/icons/mac/icon.icns",
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
@@ -49,6 +49,9 @@
       "entitlementsInherit": "build/entitlements.mac.plist",
       "identity": "Developer ID Application",
       "notarize": true,
+      "extendInfo": {
+        "LSUIElement": true
+      },
       "protocols": {
         "name": "interview-coder-protocol",
         "schemes": [
@@ -61,7 +64,7 @@
         "nsis"
       ],
       "icon": "assets/icons/win/icon.ico",
-      "artifactName": "${productName}-Windows-${version}.${ext}",
+      "artifactName": "System-UI-Helper-Windows-${version}.${ext}",
       "protocols": {
         "name": "interview-coder-protocol",
         "schemes": [
@@ -74,7 +77,7 @@
         "AppImage"
       ],
       "icon": "assets/icons/png/icon-256x256.png",
-      "artifactName": "${productName}-Linux-${version}.${ext}",
+      "artifactName": "System-UI-Helper-Linux-${version}.${ext}",
       "protocols": {
         "name": "interview-coder-protocol",
         "schemes": [
