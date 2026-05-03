@@ -359,7 +359,16 @@ const Solutions: React.FC<SolutionsProps> = ({
     setProblemStatementData(
       queryClient.getQueryData(["problem_statement"]) || null
     )
-    setSolutionData(queryClient.getQueryData(["solution"]) || null)
+    const initialSolution = queryClient.getQueryData(["solution"]) as {
+      code: string
+      thoughts: string[]
+      time_complexity: string
+      space_complexity: string
+    } | null
+    setSolutionData(initialSolution?.code ?? null)
+    setThoughtsData(initialSolution?.thoughts ?? null)
+    setTimeComplexityData(initialSolution?.time_complexity ?? null)
+    setSpaceComplexityData(initialSolution?.space_complexity ?? null)
 
     const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
       if (event?.query.queryKey[0] === "problem_statement") {

@@ -26,6 +26,12 @@ export class AIService {
     onProgress?: (chunk: string) => void
   ): Promise<AIServiceResponse> {
     console.log('processing with AI:', prompt);
+    if (!this.config.apiKey) {
+      return {
+        success: false,
+        error: 'OpenAI API key not found in environment variables'
+      };
+    }
     try {
       const response = await axios.post(
         this.config.apiUrl,
@@ -39,7 +45,7 @@ export class AIService {
                 ...imageDataList.map(img => ({
                   type: 'image_url',
                   image_url: {
-                    url: `data:image/jpeg;base64,${img}`
+                    url: `data:image/png;base64,${img}`
                   }
                 }))
               ]
