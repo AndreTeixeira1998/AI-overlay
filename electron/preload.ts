@@ -8,7 +8,6 @@ interface ElectronAPI {
     width: number
     height: number
   }) => Promise<void>
-  clearStore: () => Promise<{ success: boolean; error?: string }>
   getScreenshots: () => Promise<{
     success: boolean
     previews?: Array<{ path: string; preview: string }> | null
@@ -44,7 +43,6 @@ interface ElectronAPI {
 
 export const PROCESSING_EVENTS = {
   //Global state
-  UNAUTHORIZED: "procesing-unauthorized",
   NO_SCREENSHOTS: "processing-no-screenshots",
 
   //Initial solution generation state
@@ -72,7 +70,6 @@ webFrame.setVisualZoomLevelLimits(1, 1);
 const electronAPI = {
   updateContentDimensions: (dimensions: { width: number; height: number }) =>
     ipcRenderer.invoke("update-content-dimensions", dimensions),
-  clearStore: () => ipcRenderer.invoke("clear-store"),
   getScreenshots: () => ipcRenderer.invoke("get-screenshots"),
   deleteScreenshot: (path: string) =>
     ipcRenderer.invoke("delete-screenshot", path),

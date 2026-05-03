@@ -1,14 +1,3 @@
-export interface Solution {
-  initial_thoughts: string[]
-  thought_steps: string[]
-  description: string
-  code: string
-}
-
-export interface SolutionsResponse {
-  [key: string]: Solution
-}
-
 export interface ProblemStatementData {
   problem_statement: string
   input_format: {

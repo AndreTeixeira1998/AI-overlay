@@ -1,5 +1,4 @@
-import axios, { AxiosResponse } from 'axios';
-import { BrowserWindow } from 'electron';
+import axios from 'axios';
 
 export interface AIConfig {
   apiUrl: string;
@@ -15,11 +14,9 @@ export interface AIServiceResponse {
 
 export class AIService {
   private config: AIConfig;
-  private mainWindow: BrowserWindow | null;
-  
-  constructor(config: AIConfig, mainWindow: BrowserWindow | null) {
+
+  constructor(config: AIConfig) {
     this.config = config;
-    this.mainWindow = mainWindow;
   }
 
   async processWithAI(
@@ -59,7 +56,7 @@ export class AIService {
       );
 
       const content = response.data.choices[0]?.message?.content || '';
-      
+
       if (onProgress) {
         onProgress(content);
       }
@@ -78,9 +75,5 @@ export class AIService {
         error: error.message || 'Failed to process with AI'
       };
     }
-  }
-
-  updateConfig(newConfig: Partial<AIConfig>) {
-    this.config = { ...this.config, ...newConfig };
   }
 }

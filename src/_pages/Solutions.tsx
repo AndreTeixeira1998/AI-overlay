@@ -1,6 +1,6 @@
 // Solutions.tsx
 import React, { useState, useEffect, useRef } from "react"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQueryClient } from "@tanstack/react-query"
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
 import { dracula } from "react-syntax-highlighter/dist/esm/styles/prism"
 
@@ -8,7 +8,6 @@ import ScreenshotQueue from "../components/Queue/ScreenshotQueue"
 
 import { ProblemStatementData } from "../types/solutions"
 import SolutionCommands from "../components/Solutions/SolutionCommands"
-import Debug from "./Debug"
 import { useToast } from "../contexts/toast"
 import { COMMAND_KEY } from "../utils/platform"
 
@@ -148,8 +147,6 @@ const Solutions: React.FC<SolutionsProps> = ({
   const [isTooltipVisible, setIsTooltipVisible] = useState(false)
   const [tooltipHeight, setTooltipHeight] = useState(0)
 
-  const [isResetting, setIsResetting] = useState(false)
-
   interface Screenshot {
     id: string
     path: string
@@ -227,10 +224,7 @@ const Solutions: React.FC<SolutionsProps> = ({
         }
       }),
       window.electronAPI.onResetView(() => {
-        // First set the reset state
-        setIsResetting(true)
-
-        // Remove queries
+        // Remove cached debug/solution data and clear extra screenshots
         queryClient.removeQueries({
           queryKey: ["solution"]
         })
@@ -238,13 +232,7 @@ const Solutions: React.FC<SolutionsProps> = ({
           queryKey: ["new_solution"]
         })
 
-        // Reset screenshots
         setExtraScreenshots([])
-
-        // Clear the reset state after a short delay
-        setTimeout(() => {
-          setIsResetting(false)
-        }, 0)
       }),
       window.electronAPI.onSolutionStart(() => {
         // Reset related state at the start of each processing run
@@ -314,13 +302,14 @@ const Solutions: React.FC<SolutionsProps> = ({
         const fetchScreenshots = async () => {
           try {
             const existing = await window.electronAPI.getScreenshots()
-            const screenshots =
-              existing.previews?.map((p) => ({
+            const screenshots = (Array.isArray(existing) ? existing : []).map(
+              (p) => ({
                 id: p.path,
                 path: p.path,
                 preview: p.preview,
                 timestamp: Date.now()
-              })) || []
+              })
+            )
             setExtraScreenshots(screenshots)
           } catch (error) {
             console.error("Error loading extra screenshots:", error)

@@ -108,7 +108,7 @@ export function initializeIpcHandlers(deps: IIpcHandlerDeps): void {
     }
   })
 
-  // Auth related handlers
+  // External link handler
   ipcMain.handle("open-external-url", (event, url: string) => {
     shell.openExternal(url)
   })

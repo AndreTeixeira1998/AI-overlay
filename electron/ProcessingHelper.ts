@@ -22,7 +22,7 @@ export class ProcessingHelper {
     
     // Initialize the AI service using config from environment variables
     const aiConfig = this.deps.getAIConfig();
-    this.aiService = new AIService(aiConfig, this.deps.getMainWindow());
+    this.aiService = new AIService(aiConfig);
   }
 
   private async waitForInitialization(
@@ -266,7 +266,14 @@ export class ProcessingHelper {
       return result;
 
     } catch (error: any) {
-      // existing error handling...
+      if (axios.isCancel(error)) {
+        return { success: false, error: "Processing cancelled by user." };
+      }
+      console.error("processScreenshotsHelper error:", error);
+      return {
+        success: false,
+        error: error.message || "Failed to process screenshots."
+      };
     }
   }
 
@@ -293,7 +300,14 @@ export class ProcessingHelper {
       );
 
     } catch (error: any) {
-      // existing error handling...
+      if (axios.isCancel(error)) {
+        return { success: false, error: "Processing cancelled by user." };
+      }
+      console.error("generateSolutionsHelper error:", error);
+      return {
+        success: false,
+        error: error.message || "Failed to generate solution."
+      };
     }
   }
 

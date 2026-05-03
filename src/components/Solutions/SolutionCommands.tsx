@@ -7,7 +7,6 @@ import { COMMAND_KEY } from "../../utils/platform"
 export interface SolutionCommandsProps {
   onTooltipVisibilityChange: (visible: boolean, height: number) => void
   isProcessing: boolean
-  screenshots?: Screenshot[]
   extraScreenshots?: Screenshot[]
   currentLanguage: string
   setLanguage: (language: string) => void
@@ -76,64 +75,6 @@ const SolutionCommands: React.FC<SolutionCommandsProps> = ({
           </div>
 
           {/* Screenshot and debug commands — only visible when not processing */}
-          {/* <div
-            className="flex items-center gap-2 cursor-pointer rounded px-2 py-1.5 hover:bg-white/10 transition-colors"
-            onClick={async () => {
-              try {
-                const result = await window.electronAPI.triggerScreenshot()
-                if (!result.success) {
-                  console.error("Screenshot failed:", result.error)
-                  showToast("Error", "Screenshot failed", "error")
-                }
-              } catch (error) {
-                console.error("Screenshot error:", error)
-                showToast("Error", "Screenshot failed", "error")
-              }
-            }}
-          >
-            <span className="text-[11px] leading-none truncate">
-              {extraScreenshots.length === 0
-                ? "Capture your code"
-                : "Screenshot"}
-            </span>
-            <div className="flex gap-1">
-              <button className="bg-white/10 rounded-md px-1.5 py-1 text-[11px] leading-none text-white/70">
-                {COMMAND_KEY}
-              </button>
-              <button className="bg-white/10 rounded-md px-1.5 py-1 text-[11px] leading-none text-white/70">
-                H
-              </button>
-            </div>
-          </div> */}
-
-          {/* {extraScreenshots.length > 0 && (
-            <div
-              className="flex items-center gap-2 cursor-pointer rounded px-2 py-1.5 hover:bg-white/10 transition-colors"
-              onClick={async () => {
-                try {
-                  const result =
-                    await window.electronAPI.triggerProcessScreenshots()
-                  if (!result.success) {
-                    console.error("Failed to process screenshots:", result.error)
-                    showToast("Error", "Failed to process screenshots", "error")
-                  }
-                } catch (error) {
-                  console.error("Error processing screenshots:", error)
-                  showToast("Error", "Failed to process screenshots", "error")
-                }
-              }}
-            >
-              <span className="text-[11px] leading-none">Debug</span>
-              <div className="flex gap-1">
-                <button className="bg-white/10 rounded-md px-1.5 py-1 text-[11px] leading-none text-white/70">
-                  {COMMAND_KEY}
-                </button>
-                <button className="bg-white/10 rounded-md px-1.5 py-1 text-[11px] leading-none text-white/70">
-                  D
-                </button>
-              </div>
-            </div>
-          )} */}
 
           {/* Start over — always visible */}
           <div
@@ -281,54 +222,6 @@ const SolutionCommands: React.FC<SolutionCommandsProps> = ({
                               Capture additional parts of the problem or solution for debugging help.
                             </p>
                           </div>
-
-                          {/* {extraScreenshots.length > 0 && (
-                            <div
-                              className="cursor-pointer rounded px-2 py-1.5 hover:bg-white/10 transition-colors"
-                              onClick={async () => {
-                                try {
-                                  const result =
-                                    await window.electronAPI.triggerProcessScreenshots()
-                                  if (!result.success) {
-                                    console.error(
-                                      "Failed to process screenshots:",
-                                      result.error
-                                    )
-                                    showToast(
-                                      "Error",
-                                      "Failed to process screenshots",
-                                      "error"
-                                    )
-                                  }
-                                } catch (error) {
-                                  console.error(
-                                    "Error processing screenshots:",
-                                    error
-                                  )
-                                  showToast(
-                                    "Error",
-                                    "Failed to process screenshots",
-                                    "error"
-                                  )
-                                }
-                              }}
-                            >
-                              <div className="flex items-center justify-between">
-                                <span className="truncate">Debug</span>
-                                <div className="flex gap-1 flex-shrink-0">
-                                  <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px] leading-none">
-                                    {COMMAND_KEY}
-                                  </span>
-                                  <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px] leading-none">
-                                    D
-                                  </span>
-                                </div>
-                              </div>
-                              <p className="text-[10px] leading-relaxed text-white/70 truncate mt-1">
-                                Generate a new solution from all previous and newly added screenshots.
-                              </p>
-                            </div>
-                          )} */}
                         </>
                       )}
 

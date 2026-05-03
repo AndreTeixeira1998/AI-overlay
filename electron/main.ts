@@ -36,9 +36,7 @@ const state = {
 
   // Processing events
   PROCESSING_EVENTS: {
-    UNAUTHORIZED: "processing-unauthorized",
     NO_SCREENSHOTS: "processing-no-screenshots",
-    API_KEY_INVALID: "processing-api-key-invalid",
     INITIAL_START: "initial-start",
     PROBLEM_EXTRACTED: "problem-extracted",
     SOLUTION_SUCCESS: "solution-success",
@@ -154,8 +152,6 @@ function initializeHelpers() {
     moveWindowDown: () => moveWindowVertical((y) => y + state.step)
   } as IShortcutsHelperDeps)
 }
-
-// Auth callback handler
 
 // Force Single Instance Lock
 const gotTheLock = app.requestSingleInstanceLock()
@@ -601,7 +597,6 @@ export {
   setWindowDimensions,
   moveWindowHorizontal,
   moveWindowVertical,
-  handleAuthCallback,
   getMainWindow,
   getView,
   setView,
