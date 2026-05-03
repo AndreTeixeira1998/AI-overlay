@@ -1,49 +1,10 @@
 // ipcHandlers.ts
 
 import { ipcMain, shell } from "electron"
-import { createClient } from "@supabase/supabase-js"
-import { randomBytes } from "crypto"
 import { IIpcHandlerDeps } from "./main"
 
 export function initializeIpcHandlers(deps: IIpcHandlerDeps): void {
   console.log("Initializing IPC handlers")
-
-  // Credits handlers
-  ipcMain.handle("set-initial-credits", async (_event, credits: number) => {
-    const mainWindow = deps.getMainWindow()
-    if (!mainWindow) return
-
-    try {
-      // Set the credits in a way that ensures atomicity
-      await mainWindow.webContents.executeJavaScript(
-        `window.__CREDITS__ = ${credits}`
-      )
-      mainWindow.webContents.send("credits-updated", credits)
-    } catch (error) {
-      console.error("Error setting initial credits:", error)
-      throw error
-    }
-  })
-
-  ipcMain.handle("decrement-credits", async () => {
-    const mainWindow = deps.getMainWindow()
-    if (!mainWindow) return
-
-    try {
-      const currentCredits = await mainWindow.webContents.executeJavaScript(
-        "window.__CREDITS__"
-      )
-      if (currentCredits > 0) {
-        const newCredits = currentCredits - 1
-        await mainWindow.webContents.executeJavaScript(
-          `window.__CREDITS__ = ${newCredits}`
-        )
-        mainWindow.webContents.send("credits-updated", newCredits)
-      }
-    } catch (error) {
-      console.error("Error decrementing credits:", error)
-    }
-  })
 
   // Screenshot queue handlers
   ipcMain.handle("get-screenshot-queue", () => {
@@ -148,33 +109,8 @@ export function initializeIpcHandlers(deps: IIpcHandlerDeps): void {
   })
 
   // Auth related handlers
-  ipcMain.handle("get-pkce-verifier", () => {
-    return randomBytes(32).toString("base64url")
-  })
-
   ipcMain.handle("open-external-url", (event, url: string) => {
     shell.openExternal(url)
-  })
-
-  // Subscription handlers
-  ipcMain.handle("open-settings-portal", () => {
-    shell.openExternal("https://www.interviewcoder.co/settings")
-  })
-  ipcMain.handle("open-subscription-portal", async (_event, authData) => {
-    try {
-      const url = "https://www.interviewcoder.co/checkout"
-      await shell.openExternal(url)
-      return { success: true }
-    } catch (error) {
-      console.error("Error opening checkout page:", error)
-      return {
-        success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to open checkout page"
-      }
-    }
   })
 
   // Window management handlers

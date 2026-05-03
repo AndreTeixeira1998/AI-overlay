@@ -3,8 +3,6 @@
 import { ToastMessage } from "./components/ui/toast"
 
 interface ImportMetaEnv {
-  readonly VITE_SUPABASE_URL: string
-  readonly VITE_SUPABASE_ANON_KEY: string
   readonly NODE_ENV: string
 }
 
@@ -57,8 +55,6 @@ interface Window {
       removeListener(channel: string, func: (...args: any[]) => void): void
     }
   }
-  __CREDITS__: number
   __LANGUAGE__: string
   __IS_INITIALIZED__: boolean
-  __AUTH_TOKEN__: string
 }

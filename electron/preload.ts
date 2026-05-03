@@ -46,7 +46,6 @@ export const PROCESSING_EVENTS = {
   //全局状态
   UNAUTHORIZED: "procesing-unauthorized",
   NO_SCREENSHOTS: "processing-no-screenshots",
-  OUT_OF_CREDITS: "out-of-credits",
 
   //生成初始解决方案的状态
   INITIAL_START: "initial-start",
@@ -71,7 +70,6 @@ webFrame.setVisualZoomLevelLimits(1, 1);
 
 
 const electronAPI = {
-  openSettingsPortal: () => ipcRenderer.invoke("open-settings-portal"),
   updateContentDimensions: (dimensions: { width: number; height: number }) =>
     ipcRenderer.invoke("update-content-dimensions", dimensions),
   clearStore: () => ipcRenderer.invoke("clear-store"),
@@ -226,15 +224,11 @@ ipcRenderer.on("restore-focus", () => {
 // 而不暴露整个对象
 contextBridge.exposeInMainWorld("electron", {
   ipcRenderer: {
-    on: (channel: string, func: (...args: any[]) => void) => {
-      if (channel === "auth-callback") {
-        ipcRenderer.on(channel, (event, ...args) => func(...args))
-      }
-    },
-    removeListener: (channel: string, func: (...args: any[]) => void) => {
-      if (channel === "auth-callback") {
-        ipcRenderer.removeListener(channel, (event, ...args) => func(...args))
-      }
-    }
+    on: (_channel: string, _func: (...args: any[]) => void) => {},
+    removeListener: (
+      _channel: string,
+      _func: (...args: any[]) => void
+    ) => {}
   }
 })
+

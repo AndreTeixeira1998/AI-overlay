@@ -9,10 +9,9 @@ export interface SolutionCommandsProps {
   isProcessing: boolean
   screenshots?: Screenshot[]
   extraScreenshots?: Screenshot[]
-  credits: number
   currentLanguage: string
   setLanguage: (language: string) => void
-  parentHeight: number
+  parentHeight?: number
 }
 
 const SolutionCommands: React.FC<SolutionCommandsProps> = ({

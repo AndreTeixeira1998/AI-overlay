@@ -68,3 +68,20 @@ export const getAnalysisPrompts = ({language}:Record<string,any>) =>
    ...
    
 首选编程语言：${language}。请确保提取的信息准确、完整，以便后续算法工程师进行进一步分析和解答。`;
+
+export const getDebugPrompts = ({problemInfo, language}: Record<string, any>) => `你作为算法专家级别的面试者，请基于以下编程问题：${JSON.stringify(problemInfo)}
+以及用户提供的截图（可能包含当前代码、报错信息或运行结果），分析现有解决方案的问题，并提供改进后的代码。必须严格按照以下 JSON 格式返回：
+
+{
+  "code": "完整的、改进后的代码实现，使用 ${language} 语言",
+  "thoughts": [
+    "1. 问题诊断：...",
+    "2. 改进思路：...",
+    "3. 关键变更：...",
+    "4. 边界情况：..."
+  ],
+  "time_complexity": "时间复杂度分析（包含详细推导过程）",
+  "space_complexity": "空间复杂度分析（包含详细推导过程）"
+}
+
+请直接返回前端 JSON.parse api能够解析的 JSON 字符串，不要包含其他说明文字，也不要包含任何markdown的语法。`;

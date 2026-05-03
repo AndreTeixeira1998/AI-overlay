@@ -33,7 +33,6 @@ export interface ElectronAPI {
   triggerMoveRight: () => Promise<{ success: boolean; error?: string }>
   triggerMoveUp: () => Promise<{ success: boolean; error?: string }>
   triggerMoveDown: () => Promise<{ success: boolean; error?: string }>
-  openSettingsPortal: () => Promise<void>
   getPlatform: () => string
 }
 
@@ -49,6 +48,5 @@ declare global {
         ) => void
       }
     }
-    __CREDITS__: number
   }
 }

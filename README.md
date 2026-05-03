@@ -47,7 +47,7 @@ The application uses unidentifiable global keyboard shortcuts that won't be dete
 1. **Initial Setup**
 
    - Launch the invisible window
-   - Login and subscribe
+   - Provide your OpenAI API key via the `OPENAI_API_KEY` environment variable (in `.env`)
 
 2. **Capturing Problem**
 
@@ -80,7 +80,7 @@ The application uses unidentifiable global keyboard shortcuts that won't be dete
 
 - Node.js (v16 or higher)
 - npm or bun package manager
-- Subscription on https://www.interviewcoder.co/settings
+- An OpenAI API key (set as `OPENAI_API_KEY` in a `.env` file)
 - Screen Recording Permission for Terminal/IDE
   - On macOS:
     1. Go to System Preferences > Security & Privacy > Privacy > Screen Recording
@@ -134,8 +134,14 @@ This will:
 
 ## Configuration
 
-1. On first launch, you'll need to provide your OpenAI API key
-2. The application will store your settings locally using electron-store
+Create a `.env` file at the project root with at least:
+
+```
+OPENAI_API_KEY=sk-...
+# Optional overrides:
+# OPENAI_API_URL=https://api.openai.com/v1/chat/completions
+# OPENAI_MODEL=gpt-4-vision-preview
+```
 
 ## Building (for Roy)
 

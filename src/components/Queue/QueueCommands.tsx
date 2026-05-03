@@ -6,7 +6,6 @@ import { COMMAND_KEY } from "../../utils/platform"
 interface QueueCommandsProps {
   onTooltipVisibilityChange: (visible: boolean, height: number) => void
   screenshotCount?: number
-  credits: number
   currentLanguage: string
   setLanguage: (language: string) => void
 }
@@ -14,7 +13,6 @@ interface QueueCommandsProps {
 const QueueCommands: React.FC<QueueCommandsProps> = ({
   onTooltipVisibilityChange,
   screenshotCount = 0,
-  credits,
   currentLanguage,
   setLanguage
 }) => {

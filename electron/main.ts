@@ -1,4 +1,4 @@
-import { app, BrowserWindow, screen, shell, ipcRenderer } from "electron"
+import { app, BrowserWindow, screen, shell } from "electron"
 import path from "path"
 import { initializeIpcHandlers } from "./ipcHandlers"
 import { ProcessingHelper } from "./ProcessingHelper"
@@ -38,7 +38,6 @@ const state = {
   PROCESSING_EVENTS: {
     UNAUTHORIZED: "processing-unauthorized",
     NO_SCREENSHOTS: "processing-no-screenshots",
-    OUT_OF_CREDITS: "out-of-credits",
     API_KEY_INVALID: "processing-api-key-invalid",
     INITIAL_START: "initial-start",
     PROBLEM_EXTRACTED: "problem-extracted",
@@ -158,65 +157,19 @@ function initializeHelpers() {
 
 // Auth callback handler
 
-// Register the interview-coder protocol
-if (process.platform === "darwin") {
-  app.setAsDefaultProtocolClient("interview-coder")
-} else {
-  app.setAsDefaultProtocolClient("interview-coder", process.execPath, [
-    path.resolve(process.argv[1] || "")
-  ])
-}
-
-// Handle the protocol. In this case, we choose to show an Error Box.
-if (process.defaultApp && process.argv.length >= 2) {
-  app.setAsDefaultProtocolClient("interview-coder", process.execPath, [
-    path.resolve(process.argv[1])
-  ])
-}
-
 // Force Single Instance Lock
 const gotTheLock = app.requestSingleInstanceLock()
 
 if (!gotTheLock) {
   app.quit()
 } else {
-  app.on("second-instance", (event, commandLine) => {
+  app.on("second-instance", () => {
     // Someone tried to run a second instance, we should focus our window.
     if (state.mainWindow) {
       if (state.mainWindow.isMinimized()) state.mainWindow.restore()
       state.mainWindow.focus()
-
-      // Protocol handler for state.mainWindow32
-      // argv: An array of the second instance's (command line / deep linked) arguments
-      if (process.platform === "win32") {
-        // Keep only command line / deep linked arguments
-        const deeplinkingUrl = commandLine.pop()
-        if (deeplinkingUrl) {
-          handleAuthCallback(deeplinkingUrl, state.mainWindow)
-        }
-      }
     }
   })
-}
-
-async function handleAuthCallback(url: string, win: BrowserWindow | null) {
-  try {
-    console.log("Auth callback received:", url)
-    const urlObj = new URL(url)
-    const code = urlObj.searchParams.get("code")
-
-    if (!code) {
-      console.error("Missing code in callback URL")
-      return
-    }
-
-    if (win) {
-      // Send the code to the renderer for PKCE exchange
-      win.webContents.send("auth-callback", { code })
-    }
-  } catch (error) {
-    console.error("Error handling auth callback:", error)
-  }
 }
 
 // Window management functions
@@ -307,11 +260,8 @@ async function createWindow(): Promise<void> {
   }
   state.mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     console.log("Attempting to open URL:", url)
-    if (url.includes("google.com") || url.includes("supabase.co")) {
-      shell.openExternal(url)
-      return { action: "deny" }
-    }
-    return { action: "allow" }
+    shell.openExternal(url)
+    return { action: "deny" }
   })
 
   // 增强的屏幕捕获阻力
@@ -486,10 +436,6 @@ function loadEnvVariables() {
     dotenv.config({ path: path.join(process.resourcesPath, ".env") })
   }
   console.log("Loaded environment variables:", {
-    VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL ? "exists" : "missing",
-    VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY
-      ? "exists"
-      : "missing",
     OPENAI_API_URL: process.env.OPENAI_API_URL ? "exists" : "missing",
     OPENAI_API_KEY: process.env.OPENAI_API_KEY ? "exists" : "missing",
     OPENAI_MODEL: process.env.OPENAI_MODEL ? "exists" : "missing"
@@ -553,32 +499,6 @@ async function initializeApp() {
     app.quit()
   }
 }
-
-// Handle the auth callback in development
-app.on("open-url", (event, url) => {
-  console.log("open-url event received:", url)
-  event.preventDefault()
-  if (url.startsWith("interview-coder://")) {
-    handleAuthCallback(url, state.mainWindow)
-  }
-})
-
-// Handle the auth callback in production (Windows/Linux)
-app.on("second-instance", (event, commandLine) => {
-  console.log("second-instance event received:", commandLine)
-  const url = commandLine.find((arg) => arg.startsWith("interview-coder://"))
-  if (url) {
-    handleAuthCallback(url, state.mainWindow)
-  }
-
-  // Focus or create the main window
-  if (!state.mainWindow) {
-    createWindow()
-  } else {
-    if (state.mainWindow.isMinimized()) state.mainWindow.restore()
-    state.mainWindow.focus()
-  }
-})
 
 // Prevent multiple instances of the app
 if (!app.requestSingleInstanceLock()) {
