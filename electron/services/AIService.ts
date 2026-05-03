@@ -1,5 +1,4 @@
-import axios, { AxiosResponse } from 'axios';
-import { BrowserWindow } from 'electron';
+import axios from 'axios';
 
 export interface AIConfig {
   apiUrl: string;
@@ -15,11 +14,9 @@ export interface AIServiceResponse {
 
 export class AIService {
   private config: AIConfig;
-  private mainWindow: BrowserWindow | null;
-  
-  constructor(config: AIConfig, mainWindow: BrowserWindow | null) {
+
+  constructor(config: AIConfig) {
     this.config = config;
-    this.mainWindow = mainWindow;
   }
 
   async processWithAI(
@@ -29,6 +26,12 @@ export class AIService {
     onProgress?: (chunk: string) => void
   ): Promise<AIServiceResponse> {
     console.log('processing with AI:', prompt);
+    if (!this.config.apiKey) {
+      return {
+        success: false,
+        error: 'OpenAI API key not found in environment variables'
+      };
+    }
     try {
       const response = await axios.post(
         this.config.apiUrl,
@@ -42,7 +45,7 @@ export class AIService {
                 ...imageDataList.map(img => ({
                   type: 'image_url',
                   image_url: {
-                    url: `data:image/jpeg;base64,${img}`
+                    url: `data:image/png;base64,${img}`
                   }
                 }))
               ]
@@ -59,7 +62,7 @@ export class AIService {
       );
 
       const content = response.data.choices[0]?.message?.content || '';
-      
+
       if (onProgress) {
         onProgress(content);
       }
@@ -78,9 +81,5 @@ export class AIService {
         error: error.message || 'Failed to process with AI'
       };
     }
-  }
-
-  updateConfig(newConfig: Partial<AIConfig>) {
-    this.config = { ...this.config, ...newConfig };
   }
 }

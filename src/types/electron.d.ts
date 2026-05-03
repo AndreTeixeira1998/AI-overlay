@@ -3,12 +3,7 @@ export interface ElectronAPI {
     width: number
     height: number
   }) => Promise<void>
-  clearStore: () => Promise<{ success: boolean; error?: string }>
-  getScreenshots: () => Promise<{
-    success: boolean
-    previews?: Array<{ path: string; preview: string }> | null
-    error?: string
-  }>
+  getScreenshots: () => Promise<Array<{ path: string; preview: string }>>
   deleteScreenshot: (
     path: string
   ) => Promise<{ success: boolean; error?: string }>
@@ -23,6 +18,7 @@ export interface ElectronAPI {
   onProcessingNoScreenshots: (callback: () => void) => () => void
   onProblemExtracted: (callback: (data: any) => void) => () => void
   onSolutionSuccess: (callback: (data: any) => void) => () => void
+  onSolutionStreamSuccess: (callback: (data: any) => void) => () => void
   onDebugError: (callback: (error: string) => void) => () => void
   openExternal: (url: string) => void
   toggleMainWindow: () => Promise<{ success: boolean; error?: string }>
@@ -33,7 +29,6 @@ export interface ElectronAPI {
   triggerMoveRight: () => Promise<{ success: boolean; error?: string }>
   triggerMoveUp: () => Promise<{ success: boolean; error?: string }>
   triggerMoveDown: () => Promise<{ success: boolean; error?: string }>
-  openSettingsPortal: () => Promise<void>
   getPlatform: () => string
 }
 
@@ -49,6 +44,7 @@ declare global {
         ) => void
       }
     }
-    __CREDITS__: number
+    __LANGUAGE__: string
+    __IS_INITIALIZED__: boolean
   }
 }

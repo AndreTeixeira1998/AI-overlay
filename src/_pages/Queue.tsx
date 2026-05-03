@@ -6,7 +6,7 @@ import QueueCommands from "../components/Queue/QueueCommands"
 import { useToast } from "../contexts/toast"
 import { Screenshot } from "../types/screenshots"
 
-//获取截图
+//Fetch screenshots
 async function fetchScreenshots(): Promise<Screenshot[]> {
   try {
     const existing = await window.electronAPI.getScreenshots()
@@ -19,14 +19,12 @@ async function fetchScreenshots(): Promise<Screenshot[]> {
 
 interface QueueProps {
   setView: (view: "queue" | "solutions" | "debug") => void
-  credits: number
   currentLanguage: string
   setLanguage: (language: string) => void
 }
 
 const Queue: React.FC<QueueProps> = ({
   setView,
-  credits,
   currentLanguage,
   setLanguage
 }) => {
@@ -138,7 +136,6 @@ const Queue: React.FC<QueueProps> = ({
           <QueueCommands
             onTooltipVisibilityChange={handleTooltipVisibilityChange}
             screenshotCount={screenshots.length}
-            credits={credits}
             currentLanguage={currentLanguage}
             setLanguage={setLanguage}
           />

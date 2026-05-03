@@ -61,8 +61,8 @@ export class ShortcutsHelper {
     })
 
     globalShortcut.register("CommandOrControl+Q", () => {
-      console.log('Ctrl+Q 触发退出');
-      app.quit(); // 退出应用
+      console.log('Ctrl+Q triggered quit');
+      app.quit(); // Quit the application
     })
 
     globalShortcut.register("CommandOrControl+Right", () => {
@@ -82,6 +82,15 @@ export class ShortcutsHelper {
 
     globalShortcut.register("CommandOrControl+B", () => {
       this.deps.toggleMainWindow()
+    })
+
+    // Panic hide: a hard hide() (not opacity 0) for capture paths the
+    // OS-level exclude flag cannot defeat (older Zoom desktop using
+    // BitBlt/DXGI duplication, Linux/Wayland, hardware HDMI capture).
+    // A truly hidden window cannot appear in any capture path.
+    globalShortcut.register("CommandOrControl+\\", () => {
+      console.log("Panic hide triggered.")
+      this.deps.panicHideMainWindow()
     })
 
     // Unregister shortcuts when quitting

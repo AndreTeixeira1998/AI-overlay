@@ -1,70 +1,99 @@
-export const getSolutionPrompts = ({problemInfo,language}:Record<string,any>) => `你作为算法专家级别的面试者，请你基于这个编程问题描述：${JSON.stringify(problemInfo)}
-                      按照面试的标准回答方式，提供解决方案，不能使用第三方api，只能是语言自己本身具有的api来解答。必须严格按照以下 JSON 格式返回：
+interface PromptArgs {
+  language: string
+}
 
-                      {
-                        "code": "完整的代码实现，使用 ${language} 语言",
-                        "thoughts": [
-                          "1. 问题理解：...",
-                          "2. 解题思路：...",
-                          "3. 优化思考：...",
-                          "4. 边界情况：..."
-                        ],
-                        "time_complexity": "时间复杂度分析（包含详细推导过程）",
-                        "space_complexity": "空间复杂度分析（包含详细推导过程）"
-                      }
+interface SolutionPromptArgs extends PromptArgs {
+  problemInfo: unknown
+}
 
-                      示例输出：
-                      {
-                        "code": "def twoSum(nums, target):\\n    seen = {}\\n    for i, num in enumerate(nums):\\n        complement = target - num\\n        if complement in seen:\\n            return [seen[complement], i]\\n        seen[num] = i\\n    return []",
-                        "thoughts": [
-                          "1. 问题理解：这是一个查找数组中两数之和等于目标值的问题，需要返回这两个数的索引位置",
-                          "2. 解题思路：使用哈希表存储遍历过的数字，每次遍历时检查目标值与当前数的差值是否存在于哈希表中",
-                          "3. 优化思考：暴力解法需要两重循环O(n²)，使用哈希表可以将时间复杂度优化至O(n)",
-                          "4. 边界情况：需要考虑数组为空、无解、多组解的情况"
-                        ],
-                        "time_complexity": "时间复杂度为O(n)，因为我们只需要遍历数组一次，哈希表的查找操作为O(1)",
-                        "space_complexity": "空间复杂度为O(n)，最坏情况下需要存储整个数组的元素到哈希表中"
-                      }
+export const getAnalysisPrompts = ({ language }: PromptArgs) =>
+  `You are a professional algorithm engineer. The user provides screenshots that may contain a programming problem description, sample input/output, illustrative figures, and unrelated page elements. Extract the programming problem precisely.
 
-                      请确保：
-                      1. 按照面试场景的标准回答格式
-                      2. code 字段包含完整、可运行的代码实现
-                      3. thoughts 数组必须包含问题理解、解题思路、优化思考、边界情况等关键点
-                      4. 复杂度分析要有推导过程，不要简单地给出结果
-                      5. 所有回答都应该清晰专业，像在真实面试中作答
+Steps:
+1. Information filtering: ignore page elements unrelated to the problem (ads, navigation bars, comments, etc.).
+2. Core extraction:
+   - Problem description: title, requirements, and the core algorithmic question.
+   - Constraints: time/space complexity requirements and input ranges (e.g. 1 <= n <= 10^4).
+   - I/O specification: input/output formats, paying special attention to figures or special notes.
+   - Examples: at least two complete input/output examples with explanations.
+3. Validation:
+   - Pair inputs with their outputs and verify completeness.
+   - Check that example inputs are consistent with the stated constraints.
+4. Structured output (in English, using exactly this format):
+   [Problem Name]
+   {extracted title}
 
-                      请直接返回前端 JSON.parse api能够解析的 JSON 字符串，不要包含其他说明文字，也不要包含任何markdown的语法。`;
+   [Problem Description]
+   {core algorithmic requirements, preserving math formulas and key terms}
 
-export const getAnalysisPrompts = ({language}:Record<string,any>) => 
-`你是一名专业的算法工程师，现在需要从用户提供的截图（可能包含算法题目描述、输入输出示例、演示图形及无关页面元素）中精准提取编程问题信息。请按以下步骤处理：
-1. ​信息过滤：优先识别并排除与算法问题无关的页面元素（如广告、导航栏、用户评论等干扰内容）
-2. ​核心提取：
-   - 问题描述：提取题目名称、题干要求及需要解决的核心算法问题
-   - 约束条件：明确时间/空间复杂度要求、输入数据范围限制（如：1 <= n <= 10^4）
-   - 输入输出规范：识别标准输入格式、期望输出格式，特别注意图形类题目中的特殊说明
-   - 示例解析：提取至少2组完整的输入输出案例（包含输入样例、对应输出及解释说明）
-3. ​验证逻辑：
-   - 对提取的输入输出进行配对验证，确保示例完整性
-   - 检查约束条件的数值范围是否自洽（如示例输入是否符合约束声明）
-4. ​结构化输出​（使用中文且按以下格式）：
-   【问题名称】 
-   {提取的题目名称}
-   
-   【问题描述】
-   {核心算法要求，保留数学公式和关键术语}
-   
-   【约束条件】
-   - 输入数据范围：{具体数值范围}
-   - 时间复杂度：{明确要求或推导要求}
-   - 其他限制：{特殊条件}
-   
-   【输入输出示例】
-   示例1：
-   输入：{完整输入}
-   输出：{对应输出}
-   解释：{如有图形演示需文字转述}
-   
-   示例2：
+   [Constraints]
+   - Input range: {specific numeric range}
+   - Time complexity: {explicit or inferred requirement}
+   - Other limits: {special conditions}
+
+   [Examples]
+   Example 1:
+   Input: {full input}
+   Output: {expected output}
+   Explanation: {transcribe any figure into words if needed}
+
+   Example 2:
    ...
-   
-首选编程语言：${language}。请确保提取的信息准确、完整，以便后续算法工程师进行进一步分析和解答。`;
+
+Preferred programming language: ${language}. Make sure the extracted information is accurate and complete so that an algorithm engineer can analyze and solve it.`
+
+export const getSolutionPrompts = ({ problemInfo, language }: SolutionPromptArgs) =>
+  `You are an interview candidate at the level of an algorithm expert. Based on this programming problem: ${JSON.stringify(problemInfo)}
+provide a solution in the standard interview format. You may only use language built-ins; no third-party APIs. You must return the response strictly in the following JSON format:
+
+{
+  "code": "complete code implementation in ${language}",
+  "thoughts": [
+    "1. Problem understanding: ...",
+    "2. Approach: ...",
+    "3. Optimization: ...",
+    "4. Edge cases: ..."
+  ],
+  "time_complexity": "time complexity analysis with derivation",
+  "space_complexity": "space complexity analysis with derivation"
+}
+
+Example output:
+{
+  "code": "def twoSum(nums, target):\\n    seen = {}\\n    for i, num in enumerate(nums):\\n        complement = target - num\\n        if complement in seen:\\n            return [seen[complement], i]\\n        seen[num] = i\\n    return []",
+  "thoughts": [
+    "1. Problem understanding: find two numbers in the array whose sum equals the target and return their indices.",
+    "2. Approach: use a hash map to store numbers seen so far; for each element, check whether its complement is already in the map.",
+    "3. Optimization: brute force is O(n^2); a hash map reduces it to O(n).",
+    "4. Edge cases: empty array, no solution, multiple valid pairs."
+  ],
+  "time_complexity": "O(n) — we traverse the array once and each hash-map lookup is O(1).",
+  "space_complexity": "O(n) — in the worst case the hash map stores every element."
+}
+
+Make sure that:
+1. The answer follows a standard interview format.
+2. The "code" field contains complete, runnable code.
+3. The "thoughts" array covers problem understanding, approach, optimization, and edge cases.
+4. Complexity analysis includes derivation, not just the final result.
+5. The whole response reads as a clear, professional interview answer.
+
+Return only a JSON string that JSON.parse can consume on the front-end. Do not include any other prose or markdown formatting.`
+
+export const getDebugPrompts = ({ problemInfo, language }: SolutionPromptArgs) =>
+  `You are an interview candidate at the level of an algorithm expert. Based on the following programming problem: ${JSON.stringify(problemInfo)}
+and the user's screenshots (which may contain the current code, error messages, or run results), diagnose the existing solution and provide improved code. Return the response strictly in the following JSON format:
+
+{
+  "code": "complete, improved code implementation in ${language}",
+  "thoughts": [
+    "1. Diagnosis: ...",
+    "2. Plan to fix: ...",
+    "3. Key changes: ...",
+    "4. Edge cases: ..."
+  ],
+  "time_complexity": "time complexity analysis with derivation",
+  "space_complexity": "space complexity analysis with derivation"
+}
+
+Return only a JSON string that JSON.parse can consume on the front-end. Do not include any other prose or markdown formatting.`

@@ -1,19 +1,14 @@
-console.log("预加载脚本启动中...")
+console.log("Preload script starting...")
 import { contextBridge, ipcRenderer,webFrame } from "electron"
 const { shell } = require("electron")
 
-// 暴露给渲染进程的 Electron API 类型定义
+// Electron API type definitions exposed to the renderer process
 interface ElectronAPI {
   updateContentDimensions: (dimensions: {
     width: number
     height: number
   }) => Promise<void>
-  clearStore: () => Promise<{ success: boolean; error?: string }>
-  getScreenshots: () => Promise<{
-    success: boolean
-    previews?: Array<{ path: string; preview: string }> | null
-    error?: string
-  }>
+  getScreenshots: () => Promise<Array<{ path: string; preview: string }>>
   deleteScreenshot: (
     path: string
   ) => Promise<{ success: boolean; error?: string }>
@@ -43,12 +38,10 @@ interface ElectronAPI {
 }
 
 export const PROCESSING_EVENTS = {
-  //全局状态
-  UNAUTHORIZED: "procesing-unauthorized",
+  //Global state
   NO_SCREENSHOTS: "processing-no-screenshots",
-  OUT_OF_CREDITS: "out-of-credits",
 
-  //生成初始解决方案的状态
+  //Initial solution generation state
   INITIAL_START: "initial-start",
   PROBLEM_EXTRACTED: "problem-extracted",
   SOLUTION_SUCCESS: "solution-success",
@@ -56,14 +49,14 @@ export const PROCESSING_EVENTS = {
   INITIAL_SOLUTION_ERROR: "solution-error",
   RESET: "reset",
 
-  //处理调试的状态
+  //Debug processing state
   DEBUG_START: "debug-start",
   DEBUG_SUCCESS: "debug-success",
   DEBUG_ERROR: "debug-error"
 } as const
 
-// 文件顶部
-console.log("预加载脚本正在运行")
+// File top
+console.log("Preload script is running")
 
 // Set zoom factor and limits
 webFrame.setZoomFactor(1);
@@ -71,25 +64,23 @@ webFrame.setVisualZoomLevelLimits(1, 1);
 
 
 const electronAPI = {
-  openSettingsPortal: () => ipcRenderer.invoke("open-settings-portal"),
   updateContentDimensions: (dimensions: { width: number; height: number }) =>
     ipcRenderer.invoke("update-content-dimensions", dimensions),
-  clearStore: () => ipcRenderer.invoke("clear-store"),
   getScreenshots: () => ipcRenderer.invoke("get-screenshots"),
   deleteScreenshot: (path: string) =>
     ipcRenderer.invoke("delete-screenshot", path),
   toggleMainWindow: async () => {
-    console.log("从预加载脚本调用toggleMainWindow")
+    console.log("Calling toggleMainWindow from preload")
     try {
       const result = await ipcRenderer.invoke("toggle-window")
-      console.log("toggle-window结果:", result)
+      console.log("toggle-window result:", result)
       return result
     } catch (error) {
-      console.error("toggleMainWindow出错:", error)
+      console.error("toggleMainWindow error:", error)
       throw error
     }
   },
-  // 事件监听器
+  // Event listeners
   onScreenshotTaken: (
     callback: (data: { path: string; preview: string }) => void
   ) => {
@@ -122,11 +113,10 @@ const electronAPI = {
     }
   },
   onDebugSuccess: (callback: (data: any) => void) => {
-    ipcRenderer.on("debug-success", (_event, data) => callback(data))
+    const subscription = (_: any, data: any) => callback(data)
+    ipcRenderer.on("debug-success", subscription)
     return () => {
-      ipcRenderer.removeListener("debug-success", (_event, data) =>
-        callback(data)
-      )
+      ipcRenderer.removeListener("debug-success", subscription)
     }
   },
   onDebugError: (callback: (error: string) => void) => {
@@ -204,37 +194,33 @@ const electronAPI = {
 
 // Before exposing the API
 console.log(
-  "即将暴露electronAPI，包含以下方法:",
+  "About to expose electronAPI, with methods:",
   Object.keys(electronAPI)
 )
 
-// 暴露API
+// Expose the API
 contextBridge.exposeInMainWorld("electronAPI", electronAPI)
 
-console.log("electronAPI已暴露给窗口")
+console.log("electronAPI has been exposed on window")
 
-// 添加焦点恢复处理器
+// Add focus-restore handler
 ipcRenderer.on("restore-focus", () => {
-  // 尝试聚焦当前活动元素（如果存在）
+  // Try to focus the currently active element (if any)
   const activeElement = document.activeElement as HTMLElement
   if (activeElement && typeof activeElement.focus === "function") {
     activeElement.focus()
   }
 })
 
-// 暴露受保护的方法，允许渲染进程使用ipcRenderer
-// 而不暴露整个对象
+// Expose protected methods to let the renderer use ipcRenderer
+// without exposing the entire object
 contextBridge.exposeInMainWorld("electron", {
   ipcRenderer: {
-    on: (channel: string, func: (...args: any[]) => void) => {
-      if (channel === "auth-callback") {
-        ipcRenderer.on(channel, (event, ...args) => func(...args))
-      }
-    },
-    removeListener: (channel: string, func: (...args: any[]) => void) => {
-      if (channel === "auth-callback") {
-        ipcRenderer.removeListener(channel, (event, ...args) => func(...args))
-      }
-    }
+    on: (_channel: string, _func: (...args: any[]) => void) => {},
+    removeListener: (
+      _channel: string,
+      _func: (...args: any[]) => void
+    ) => {}
   }
 })
+

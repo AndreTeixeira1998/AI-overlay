@@ -3,22 +3,16 @@ import fs from "node:fs"
 import { ScreenshotHelper } from "./ScreenshotHelper"
 import { IProcessingHelperDeps } from "./main"
 import axios from "axios"
-import { app } from "electron"
 import { BrowserWindow } from "electron"
-import { AIService, AIConfig } from './services/AIService';
-import { getAnalysisPrompts, getSolutionPrompts } from './constant/prompt';
-
-const isDev = !app.isPackaged
-const API_BASE_URL = isDev
-  ? "http://localhost:3000"
-  : "https://www.interviewcoder.co"
+import { AIService } from './services/AIService';
+import { getAnalysisPrompts, getDebugPrompts, getSolutionPrompts } from './constant/prompt';
 
 export class ProcessingHelper {
   private deps: IProcessingHelperDeps
   private screenshotHelper: ScreenshotHelper
   private aiService: AIService;
 
-  // API请求的中止控制器
+  // Abort controllers for API requests
   private currentProcessingAbortController: AbortController | null = null
   private currentExtraProcessingAbortController: AbortController | null = null
 
@@ -26,16 +20,16 @@ export class ProcessingHelper {
     this.deps = deps
     this.screenshotHelper = deps.getScreenshotHelper()
     
-    // 使用环境变量中的配置初始化AI服务
+    // Initialize the AI service using config from environment variables
     const aiConfig = this.deps.getAIConfig();
-    this.aiService = new AIService(aiConfig, this.deps.getMainWindow());
+    this.aiService = new AIService(aiConfig);
   }
 
   private async waitForInitialization(
     mainWindow: BrowserWindow
   ): Promise<void> {
     let attempts = 0
-    const maxAttempts = 50 // 总共5秒
+    const maxAttempts = 50 // 5 seconds total
 
     while (attempts < maxAttempts) {
       const isInitialized = await mainWindow.webContents.executeJavaScript(
@@ -45,33 +39,7 @@ export class ProcessingHelper {
       await new Promise((resolve) => setTimeout(resolve, 100))
       attempts++
     }
-    throw new Error("应用程序在5秒后未能初始化")
-  }
-
-  private async getCredits(): Promise<number> {
-    const mainWindow = this.deps.getMainWindow()
-    if (!mainWindow) return 0
-
-    try {
-      await this.waitForInitialization(mainWindow)
-      const credits = await mainWindow.webContents.executeJavaScript(
-        "window.__CREDITS__"
-      )
-      console.log("获得credit",credits)
-      if (
-        typeof credits !== "number" ||
-        credits === undefined ||
-        credits === null
-      ) {
-        console.warn("积分未正确初始化")
-        return 0
-      }
-
-      return credits
-    } catch (error) {
-      console.error("获取积分时出错:", error)
-      return 0
-    }
+    throw new Error("Application failed to initialize after 5 seconds")
   }
 
   private async getLanguage(): Promise<string> {
@@ -89,65 +57,36 @@ export class ProcessingHelper {
         language === undefined ||
         language === null
       ) {
-        console.warn("语言未正确初始化")
+        console.warn("Language was not initialized properly")
         return "python"
       }
 
       return language
     } catch (error) {
-      console.error("获取语言时出错:", error)
+      console.error("Error getting language:", error)
       return "python"
-    }
-  }
-
-  private async getAuthToken(): Promise<string | null> {
-    const mainWindow = this.deps.getMainWindow()
-    if (!mainWindow) return null
-
-    try {
-      await this.waitForInitialization(mainWindow)
-      const token = await mainWindow.webContents.executeJavaScript(
-        "window.__AUTH_TOKEN__"
-      )
-
-      if (!token) {
-        console.warn("未找到认证令牌")
-        return null
-      }
-
-      return token
-    } catch (error) {
-      console.error("获取认证令牌时出错:", error)
-      return null
     }
   }
 
   public async processScreenshots(): Promise<void> {
     const mainWindow = this.deps.getMainWindow()
     if (!mainWindow) return
-    console.log("执行解决问题功能")
-    // 检查是否还有剩余积分
-    const credits = await this.getCredits()
-    console.log("-----",credits)
-    if (credits < 1) {
-      mainWindow.webContents.send(this.deps.PROCESSING_EVENTS.OUT_OF_CREDITS)
-      return
-    }
+    console.log("Running solution generation")
 
     const view = this.deps.getView()
-    console.log("在视图中处理截图:", view)
+    console.log("Processing screenshots in view:", view)
 
     if (view === "queue") {
       mainWindow.webContents.send(this.deps.PROCESSING_EVENTS.INITIAL_START)
       const screenshotQueue = this.screenshotHelper.getScreenshotQueue()
-      console.log("处理所有截图内容:", screenshotQueue)
+      console.log("Processing all screenshots:", screenshotQueue)
       if (screenshotQueue.length === 0) {
         mainWindow.webContents.send(this.deps.PROCESSING_EVENTS.NO_SCREENSHOTS)
         return
       }
 
       try {
-        // 初始化中止控制器
+        // Initialize abort controller
         this.currentProcessingAbortController = new AbortController()
         const { signal } = this.currentProcessingAbortController
 
@@ -159,20 +98,16 @@ export class ProcessingHelper {
           }))
         )
 
-        console.log("转换为base64位的字符串->",screenshots)
+        console.log("Converted to base64 strings ->",screenshots)
 
         const result = await this.processScreenshotsHelper(screenshots, signal)
 
         if (!result.success) {
-          console.log("处理失败:", result.error)
-          if (result.error?.includes("API Key out of credits")) {
-            mainWindow.webContents.send(
-              this.deps.PROCESSING_EVENTS.OUT_OF_CREDITS
-            )
-          } else if (result.error?.includes("OpenAI API key not found")) {
+          console.log("Processing failed:", result.error)
+          if (result.error?.includes("OpenAI API key not found")) {
             mainWindow.webContents.send(
               this.deps.PROCESSING_EVENTS.INITIAL_SOLUTION_ERROR,
-              "在环境变量中未找到OpenAI API密钥。请设置OPEN_AI_API_KEY环境变量。"
+              "OpenAI API key not found in environment variables. Please set the OPENAI_API_KEY environment variable."
             )
           } else {
             mainWindow.webContents.send(
@@ -180,38 +115,34 @@ export class ProcessingHelper {
               result.error
             )
           }
-          // 出错时将视图重置回队列
-          console.log("由于错误重置视图到队列")
+          // On error, reset view to queue
+          console.log("Resetting view to queue due to error")
           this.deps.setView("queue")
           return
         }
 
-        // 只有在处理成功时才将视图设置为解决方案
-        console.log("处理成功后将视图设置为解决方案")
+        // Only set view to solutions if processing succeeded
+        console.log("Processing succeeded, setting view to solutions")
         mainWindow.webContents.send(
           this.deps.PROCESSING_EVENTS.SOLUTION_SUCCESS,
           result.data
         )
         this.deps.setView("solutions")
       } catch (error: any) {
-        mainWindow.webContents.send(
-          this.deps.PROCESSING_EVENTS.INITIAL_SOLUTION_ERROR,
-          error
-        )
-        console.error("处理错误:", error)
+        console.error("Processing error:", error)
         if (axios.isCancel(error)) {
           mainWindow.webContents.send(
             this.deps.PROCESSING_EVENTS.INITIAL_SOLUTION_ERROR,
-            "处理被用户取消。"
+            "Processing cancelled by user."
           )
         } else {
           mainWindow.webContents.send(
             this.deps.PROCESSING_EVENTS.INITIAL_SOLUTION_ERROR,
-            error.message || "服务器错误。请重试。"
+            error.message || "Server error. Please try again."
           )
         }
-        // 出错时将视图重置回队列
-        console.log("由于错误重置视图到队列")
+        // On error, reset view to queue
+        console.log("Resetting view to queue due to error")
         this.deps.setView("queue")
       } finally {
         this.currentProcessingAbortController = null
@@ -220,14 +151,14 @@ export class ProcessingHelper {
       // view == 'solutions'
       const extraScreenshotQueue =
         this.screenshotHelper.getExtraScreenshotQueue()
-      console.log("处理额外队列截图:", extraScreenshotQueue)
+      console.log("Processing extra screenshot queue:", extraScreenshotQueue)
       if (extraScreenshotQueue.length === 0) {
         mainWindow.webContents.send(this.deps.PROCESSING_EVENTS.NO_SCREENSHOTS)
         return
       }
       mainWindow.webContents.send(this.deps.PROCESSING_EVENTS.DEBUG_START)
 
-      // 初始化中止控制器
+      // Initialize abort controller
       this.currentExtraProcessingAbortController = new AbortController()
       const { signal } = this.currentExtraProcessingAbortController
 
@@ -243,7 +174,7 @@ export class ProcessingHelper {
           }))
         )
         console.log(
-          "合并处理的截图:",
+          "Combined screenshots:",
           screenshots.map((s) => s.path)
         )
 
@@ -268,7 +199,7 @@ export class ProcessingHelper {
         if (axios.isCancel(error)) {
           mainWindow.webContents.send(
             this.deps.PROCESSING_EVENTS.DEBUG_ERROR,
-            "额外处理被用户取消。"
+            "Extra processing was cancelled by user."
           )
         } else {
           mainWindow.webContents.send(
@@ -282,10 +213,10 @@ export class ProcessingHelper {
     }
   }
   /**
-   * 执行调用大模型的请求
-   * @param screenshots 截图数组
-   * @param signal 中止信号
-   * @returns 处理结果
+   * Run the LLM request
+   * @param screenshots Screenshots array
+   * @param signal Abort signal
+   * @returns Processing result
    */
   private async processScreenshotsHelper(
     screenshots: Array<{ path: string; data: string }>,
@@ -301,7 +232,7 @@ export class ProcessingHelper {
         imageDataList,
         signal,
         (chunk) => {
-          // 向渲染器发送部分响应
+          // Send partial response to the renderer
           mainWindow?.webContents.send(
             this.deps.PROCESSING_EVENTS.PARTIAL_RESPONSE,
             chunk
@@ -311,7 +242,7 @@ export class ProcessingHelper {
 
       if (result.success) {
         const problemInfo = result.data;
-        console.log("提取的问题信息:", problemInfo);
+        console.log("Extracted problem info:", problemInfo);
         this.deps.setProblemInfo(problemInfo);
         
         if (mainWindow) {
@@ -331,7 +262,14 @@ export class ProcessingHelper {
       return result;
 
     } catch (error: any) {
-      // 现有的错误处理代码...
+      if (axios.isCancel(error)) {
+        return { success: false, error: "Processing cancelled by user." };
+      }
+      console.error("processScreenshotsHelper error:", error);
+      return {
+        success: false,
+        error: error.message || "Failed to process screenshots."
+      };
     }
   }
 
@@ -341,7 +279,7 @@ export class ProcessingHelper {
       const language = await this.getLanguage();
       
       if (!problemInfo) {
-        throw new Error("没有可用的问题信息");
+        throw new Error("No problem info available");
       }
 
       return await this.aiService.processWithAI(
@@ -358,7 +296,14 @@ export class ProcessingHelper {
       );
 
     } catch (error: any) {
-      // 现有的错误处理代码...
+      if (axios.isCancel(error)) {
+        return { success: false, error: "Processing cancelled by user." };
+      }
+      console.error("generateSolutionsHelper error:", error);
+      return {
+        success: false,
+        error: error.message || "Failed to generate solution."
+      };
     }
   }
 
@@ -370,136 +315,54 @@ export class ProcessingHelper {
       const imageDataList = screenshots.map((screenshot) => screenshot.data)
       const problemInfo = this.deps.getProblemInfo()
       const language = await this.getLanguage()
-      const token = await this.getAuthToken()
+      const mainWindow = this.deps.getMainWindow()
 
       if (!problemInfo) {
-        throw new Error("没有可用的问题信息")
+        throw new Error("No problem info available")
       }
 
-      if (!token) {
-        return {
-          success: false,
-          error: "需要身份验证。请登录。"
-        }
-      }
-
-      const response = await axios.post(
-        `${API_BASE_URL}/api/debug`,
-        { imageDataList, problemInfo, language },
-        {
-          signal,
-          timeout: 300000,
-          validateStatus: function (status) {
-            return status < 500
-          },
-          maxRedirects: 5,
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
-          }
+      const result = await this.aiService.processWithAI(
+        getDebugPrompts({ problemInfo, language }),
+        imageDataList,
+        signal,
+        (chunk) => {
+          mainWindow?.webContents.send(
+            this.deps.PROCESSING_EVENTS.PARTIAL_RESPONSE,
+            chunk
+          )
         }
       )
 
-      return { success: true, data: response.data }
+      return result
     } catch (error: any) {
       const mainWindow = this.deps.getMainWindow()
 
-      // 首先处理取消情况
       if (axios.isCancel(error)) {
         return {
           success: false,
-          error: "处理被用户取消。"
+          error: "Processing cancelled by user."
         }
       }
 
-      if (error.response?.status === 401) {
-        if (mainWindow) {
-          // 如果身份验证失败，清除任何存储的会话
-          await mainWindow.webContents.executeJavaScript(
-            "window.supabase?.auth?.signOut()"
-          )
-          mainWindow.webContents.send(
-            this.deps.PROCESSING_EVENTS.DEBUG_ERROR,
-            "您的会话已过期。请重新登录。"
-          )
-        }
-        return {
-          success: false,
-          error: "您的会话已过期。请重新登录。"
-        }
-      }
-
-      if (error.response?.data?.error === "No token provided") {
-        if (mainWindow) {
-          mainWindow.webContents.send(
-            this.deps.PROCESSING_EVENTS.DEBUG_ERROR,
-            "请登录以继续。"
-          )
-        }
-        return {
-          success: false,
-          error: "请登录以继续。"
-        }
-      }
-
-      if (error.response?.data?.error === "Invalid token") {
-        if (mainWindow) {
-          // 如果令牌无效，清除任何存储的会话
-          await mainWindow.webContents.executeJavaScript(
-            "window.supabase?.auth?.signOut()"
-          )
-          mainWindow.webContents.send(
-            this.deps.PROCESSING_EVENTS.DEBUG_ERROR,
-            "您的会话已过期。请重新登录。"
-          )
-        }
-        return {
-          success: false,
-          error: "您的会话已过期。请重新登录。"
-        }
-      }
-
-      if (error.response?.data?.error?.includes("Operation timed out")) {
-        // 取消正在进行的API请求
+      if (error.message?.includes("Operation timed out")) {
+        // Cancel any in-flight API requests
         this.cancelOngoingRequests()
-        // 清除两个截图队列
+        // Clear both screenshot queues
         this.deps.clearQueues()
-        // 将视图状态更新为队列
+        // Reset view state to queue
         this.deps.setView("queue")
-        // 通知渲染器切换视图
+        // Notify the renderer to switch views
         if (mainWindow && !mainWindow.isDestroyed()) {
           mainWindow.webContents.send("reset-view")
           mainWindow.webContents.send(
             this.deps.PROCESSING_EVENTS.DEBUG_ERROR,
-            "操作在1分钟后超时。请重试。"
+            "Operation timed out after 1 minute. Please try again."
           )
         }
         return {
           success: false,
-          error: "操作在1分钟后超时。请重试。"
+          error: "Operation timed out after 1 minute. Please try again."
         }
-      }
-
-      if (error.response?.data?.error?.includes("API Key out of credits")) {
-        if (mainWindow) {
-          mainWindow.webContents.send(
-            this.deps.PROCESSING_EVENTS.OUT_OF_CREDITS
-          )
-        }
-        return { success: false, error: error.response.data.error }
-      }
-
-      if (
-        error.response?.data?.error?.includes(
-          "Please close this window and re-enter a valid Open AI API key."
-        )
-      ) {
-        if (mainWindow) {
-          mainWindow.webContents.send(
-            this.deps.PROCESSING_EVENTS.API_KEY_INVALID
-          )
-        }
-        return { success: false, error: error.response.data.error }
       }
 
       return { success: false, error: error.message }
@@ -521,15 +384,15 @@ export class ProcessingHelper {
       wasCancelled = true
     }
 
-    // 重置hasDebugged标志
+    // Reset the hasDebugged flag
     this.deps.setHasDebugged(false)
 
-    // 清除任何待处理状态
+    // Clear any pending state
     this.deps.setProblemInfo(null)
 
     const mainWindow = this.deps.getMainWindow()
     if (wasCancelled && mainWindow && !mainWindow.isDestroyed()) {
-      // 发送明确的消息表示处理已取消
+      // Send a clear message indicating processing was cancelled
       mainWindow.webContents.send(this.deps.PROCESSING_EVENTS.NO_SCREENSHOTS)
     }
   }

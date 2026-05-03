@@ -19,7 +19,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
   return (
     <div className="mb-3 px-2 space-y-1">
       <div className=" flex-col items-start justify-between text-[13px] font-medium text-white/90">
-        <span>语言</span>
+        <span>Language</span>
         <div className="grid grid-cols-3 gap-2 mt-3">
           {["java","javascript","python","golang", "kotlin", "sql"].map((language) => (
             <label key={language} className="flex items-center space-x-2">
